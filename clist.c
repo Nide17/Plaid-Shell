@@ -57,7 +57,7 @@ void CL_free(CList list)
   // traverse the list, deallocating each node
   while (this_node != NULL)
   {
-    // save a pointer to the next node    
+    // save a pointer to the next node
     struct _cl_node *next_node = this_node->next;
 
     // deallocate the element of the current node
@@ -81,10 +81,10 @@ int CL_length(CList list)
   if (list == NULL)
     return 0;
 
-  // traverse the list, counting the number of nodes
+    // traverse the list, counting the number of nodes
 #ifdef DEBUG
   int len = 0;
-  
+
   for (struct _cl_node *node = list->head; node != NULL; node = node->next)
     len++;
 
@@ -275,6 +275,7 @@ Token CL_remove(CList list, int pos)
     list->length--;
 
     // deallocate the node we are removing
+    printf("rm_node->tok_elt.type: %d\n", rm_node->tok_elt.type);
     free(rm_node);
 
     return rm_element;
