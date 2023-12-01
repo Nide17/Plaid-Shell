@@ -214,24 +214,56 @@ int test_tokenize_input()
 
     // echo "a b"
     list = TOK_tokenize_input("echo \"a b\"", errmsg, sizeof(errmsg));
-    TOK_print(list);
     test_assert(CL_length(list) == 2);
     test_assert(TOK_next_type(list) == TOK_WORD);
     CL_free(list);
 
-    // // echo a\\ b
-    // list = TOK_tokenize_input("echo a\\\\ b", errmsg, sizeof(errmsg));
-    // test_assert(CL_length(list) == 3);
-    // test_assert(TOK_next_type(list) == TOK_WORD);
-    // test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
-    // CL_free(list);
+    // echo a\\ b
+    list = TOK_tokenize_input("echo a\\\\ b", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 3);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
 
-    // // echo hello|grep "ell" => WORD “echo”; WORD “hello”; PIPE; WORD “grep”; QUOTED_WORD “ell”
-    // list = TOK_tokenize_input("echo hello grep \"ell\"", errmsg, sizeof(errmsg));
-    // test_assert(CL_length(list) == 5);
-    // test_assert(TOK_next_type(list) == TOK_WORD);
-    // test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
-    // CL_free(list);
+    // echo hello|grep "ell" => WORD “echo”; WORD “hello”; PIPE; WORD “grep”; QUOTED_WORD “ell”
+    list = TOK_tokenize_input("echo hello|grep \"ell\"", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 5);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
+
+    // echo boo >out_file => WORD “echo”; WORD “boo”; GREATERTHAN; WORD “out_file”
+    list = TOK_tokenize_input("echo boo >out_file", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 4);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
+
+    // echo"boo">out_file => WORD “echo”; QUOTED_WORD “boo”; GREATERTHAN; WORD “out_file”
+    list = TOK_tokenize_input("echo\"boo\">out_file", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 4);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
+
+    // (no input)
+    list = TOK_tokenize_input("", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 0);
+    CL_free(list);
+
+    // echo "hello | grep" => WORD “echo”; QUOTED_WORD “hello | grep”
+    list = TOK_tokenize_input("echo \"hello | grep\"", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 2);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
+
+    // echo a"b c" => WORD “echo”; WORD “a”; QUOTED_WORD “b c”
+    list = TOK_tokenize_input("echo a\"b c\"", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 3);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
 
     return 1;
 
