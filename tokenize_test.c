@@ -265,6 +265,70 @@ int test_tokenize_input()
     test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
     CL_free(list);
 
+    // echo a\\t => WORD “echo”; WORD “a\t”
+    list = TOK_tokenize_input("echo a\\t", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 2);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
+
+    // echo a\\n => WORD “echo”; WORD “a\n”
+    list = TOK_tokenize_input("echo a\\n", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 2);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
+
+    // echo a\\r => WORD “echo”; WORD “a\r”
+    list = TOK_tokenize_input("echo a\\r", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 2);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
+
+    // spaces
+    list = TOK_tokenize_input("   echo   a   b   ", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 3);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
+
+    // cd Plaid\ Shell\ Playground
+    list = TOK_tokenize_input("cd Plaid\\ Shell\\ Playground", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 2);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    CL_free(list);
+
+    // author | sed -e "s/^/Written by /"
+    list = TOK_tokenize_input("author | sed -e \"s/^/Written by /\"", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 5);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    CL_free(list);
+
+    // sed -ne "s/The Simpsons/I Love Lucy/p" < best\ sitcoms.txt > output
+    list = TOK_tokenize_input("sed -ne \"s/The Simpsons/I Love Lucy/p\" < best\\ sitcoms.txt > output", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 7);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    CL_free(list);
+
+    // cat "best sitcoms.txt" | grep Seinfeld
+    list = TOK_tokenize_input("cat \"best sitcoms.txt\" | grep Seinfeld", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 5);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    CL_free(list);
+
+    // echo Hello > /usr/bin/cant_write
+    list = TOK_tokenize_input("echo Hello > /usr/bin/cant_write", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 4);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    CL_free(list);
+
+    // echo a\" => WORD “echo”; WORD “a"”
+    list = TOK_tokenize_input("echo a\\\"", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 2);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    CL_free(list);
+
     return 1;
 
 test_error:
