@@ -188,30 +188,36 @@ int test_tokenize_input()
     CList list = NULL;
 
     list = TOK_tokenize_input("pwd", errmsg, sizeof(errmsg));
-    TOK_print(list);
     test_assert(CL_length(list) == 1);
     test_assert(TOK_next_type(list) == TOK_WORD);
     test_assert(strcmp_sp(TOK_next(list).text, "pwd") == 0);
     CL_free(list);
 
-    // list = TOK_tokenize_input("echo a b", errmsg, sizeof(errmsg));
-    // test_assert(CL_length(list) == 3);
-    // test_assert(TOK_next_type(list) == TOK_WORD);
-    // test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
-    // CL_free(list);
+    list = TOK_tokenize_input("   pwd   ", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 1);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "pwd") == 0);
+    CL_free(list);
 
-    // // echo a\ b
-    // list = TOK_tokenize_input("echo a\\ b", errmsg, sizeof(errmsg));
-    // test_assert(CL_length(list) == 2);
-    // test_assert(TOK_next_type(list) == TOK_WORD);
-    // test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
-    // CL_free(list);
+    list = TOK_tokenize_input("echo a b", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 3);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
 
-    // // echo "a b"
-    // list = TOK_tokenize_input("echo \"a b\"", errmsg, sizeof(errmsg));
-    // test_assert(CL_length(list) == 2);
-    // test_assert(TOK_next_type(list) == TOK_WORD);
-    // CL_free(list);
+    // echo a\ b
+    list = TOK_tokenize_input("echo a\\ b", errmsg, sizeof(errmsg));
+    test_assert(CL_length(list) == 2);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    test_assert(strcmp_sp(TOK_next(list).text, "echo") == 0);
+    CL_free(list);
+
+    // echo "a b"
+    list = TOK_tokenize_input("echo \"a b\"", errmsg, sizeof(errmsg));
+    TOK_print(list);
+    test_assert(CL_length(list) == 2);
+    test_assert(TOK_next_type(list) == TOK_WORD);
+    CL_free(list);
 
     // // echo a\\ b
     // list = TOK_tokenize_input("echo a\\\\ b", errmsg, sizeof(errmsg));
