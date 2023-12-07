@@ -23,3 +23,5 @@ tmp.*
 *.pdf
 ./cdict_test
 /42
+/Plaid\ Shell\ Playground
+*.log
