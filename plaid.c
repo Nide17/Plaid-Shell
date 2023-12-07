@@ -16,7 +16,6 @@
 #include <sys/wait.h>
 #include <assert.h>
 
-// #include "parser.h"
 #include "clist.h"
 #include "tokenize.h"
 #include "token.h"
@@ -28,13 +27,13 @@
  * return.
  *
  * Parameters:
- *   argc     The length of the argv vector
+ *   tok_len     The length of the argv vector
  *   argv[]   The argument vector
  */
-static int fn_exit(int argc, char *argv[])
+static int fn_exit(int tok_len, char *argv[])
 {
     // if exit or quit COMMAND - EXIT
-    if ((argc == 1 && strcmp(argv[0], "exit") == 0) || (strcmp(argv[0], "quit") == 0))
+    if ((tok_len == 1 && strcmp(argv[0], "exit") == 0) || (strcmp(argv[0], "quit") == 0))
         exit(0);
 
     return 0;
@@ -45,16 +44,16 @@ static int fn_exit(int argc, char *argv[])
  * to stdout
  *
  * Parameters:
- *   argc     The length of the argv vector
+ *   tok_len     The length of the argv vector
  *   argv[]   The argument vector, which is ignored
  *
  * Returns:
  *   0 on success, 1 on failure
  */
-static int fn_author(int argc, char *argv[])
+static int fn_author(int tok_len, char *argv[])
 {
     // if author command, print the author
-    if (argc == 1 && strcmp(argv[0], "author") == 0)
+    if (tok_len == 1 && strcmp(argv[0], "author") == 0)
     {
         printf("Niyomwungeri Parmenide Parmenide\n");
         return 0;
@@ -68,16 +67,16 @@ static int fn_author(int argc, char *argv[])
  * Handles the cd, by setting cwd to argv[1], which must exist.
  *
  * Parameters:
- *   argc     The length of the argv vector
+ *   tok_len     The length of the argv vector
  *   argv[]   The argument vector, which must have either 1 or 2 arguments.
  *
  * Returns:
  *   0 on success, 1 on failure
  */
-static int fn_cd(int argc, char *argv[])
+static int fn_cd(int tok_len, char *argv[])
 {
     // if the first arg is cd COMMAND
-    if (argc == 2 && strcmp(argv[0], "cd") == 0)
+    if (tok_len == 2 && strcmp(argv[0], "cd") == 0)
     {
         // Go to the directory specified by argv[1]
         if (chdir(argv[1]) == 0)
@@ -93,16 +92,16 @@ static int fn_cd(int argc, char *argv[])
  * descriptor
  *
  * Parameters (which are all ignored):
- *   argc     The length of the argv vector
+ *   tok_len     The length of the argv vector
  *   argv[]   The argument vector
  *
  * Returns:
  *   Always returns 0, since it always succeeds
  */
-static int fn_pwd(int argc, char *argv[])
+static int fn_pwd(int tok_len, char *argv[])
 {
     // if the first arg is pwd COMMAND
-    if (argc == 1 && strcmp(argv[0], "pwd") == 0)
+    if (tok_len == 1 && strcmp(argv[0], "pwd") == 0)
     {
         char currentDir[1024];
         getcwd(currentDir, sizeof(currentDir));
@@ -121,13 +120,13 @@ static int fn_pwd(int argc, char *argv[])
  * a child process, and waiting for the child to terminate
  *
  * Parameters:
- *   argc      The length of the argv vector
+ *   tok_len      The length of the argv vector
  *   argv[]    The argument vector
  *
  * Returns:
  *   The child's exit value, or -1 on error
  */
-static int forkexec_external_cmd(int argc, char *argv[])
+static int forkexec_external_cmd(int tok_len, char *argv[])
 {
     // start a child process to execute the command
     pid_t pid = fork();
@@ -158,45 +157,45 @@ static int forkexec_external_cmd(int argc, char *argv[])
  * Parses one input line, and executes it
  *
  * Parameters:
- *   argc     The length of the argv vector, which must be >= 1
+ *   tok_len     The length of the argv vector, which must be >= 1
  *   argv[]   The argument vector
  */
-void execute_command(int argc, char *argv[])
+void execute_command(int tok_len, char *argv[])
 {
-    assert(argc >= 1);
-    printf("argc: %d \n", argc);
+    assert(tok_len >= 1);
+    printf("tok_len: %d \n", tok_len);
     printf("argv[0]: %s \n", argv[0]);
 
     // If exit or quit command
     if (strcmp(argv[0], "exit") == 0 || strcmp(argv[0], "quit") == 0)
-        fn_exit(argc, argv);
+        fn_exit(tok_len, argv);
 
     // If author command
     else if (strcmp(argv[0], "author") == 0)
-        fn_author(argc, argv);
+        fn_author(tok_len, argv);
 
     // If cd command
     else if (strcmp(argv[0], "cd") == 0)
-        fn_cd(argc, argv);
+        fn_cd(tok_len, argv);
 
     // If pwd command
     else if (strcmp(argv[0], "pwd") == 0)
-        fn_pwd(argc, argv);
+        fn_pwd(tok_len, argv);
 
     // If command is not built-in, execute it as a child process
     else
-        forkexec_external_cmd(argc, argv);
+        forkexec_external_cmd(tok_len, argv);
 }
 
 
-int main(int argc, char *argv[])
+int main(int tok_len, char *argv[])
 {
     char *input = NULL;
-    CList list = CL_new();
+    CList list = CL_new(); // list of tokens
     char errmsg[100];
 
     fprintf(stdout, "Welcome to Plaid Shell!\n");
-    const char *prompt = "#> ";
+    const char *prompt = "“#? ";
 
     // main loop of the shell - read, parse, execute commands
     while (1)
@@ -216,21 +215,18 @@ int main(int argc, char *argv[])
 
         // tokenize the input into arguments
         list = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
-        TOK_print(list);
+        // TOK_print(list);
 
-        // // parse the input into arguments
-        // // argc = parse_input(input, argv, MAX_ARGS);
-        // argc = 1;
-        // argv[0] = input;
+        int tok_len = CL_length(list);
 
-        // // if the input was empty, go back to the prompt
-        // if (argc == -1)
-        //     printf(" Error: %s\n", argv[0]);
+        // if the input was empty, go back to the prompt
+        if (tok_len == 0)
+            printf(" Error: %s\n", CL_nth(list, 0).text);
 
         // // if the input was not empty, execute the command
         // else
-        //     for (int i = 0; i < argc; i++)
-        //         execute_command(argc, argv);
+        //     for (int i = 0; i < tok_len; i++)
+        //         execute_command(tok_len, argv);
     }
 
     return 0;

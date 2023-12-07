@@ -28,7 +28,7 @@ struct _clist
 typedef struct _clist *CList;
 
 // Indicates an error on some functions
-#define INVALID_RETURN ((Token){TOK_END})
+#define INVALID_RETURN ((Token){TOK_END, NULL})
 
 /*
  * Create a new CList
