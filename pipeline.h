@@ -5,168 +5,154 @@
  *
  * Author: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
  */
+
+// For plaidsh, a pipeline is an abstract syntax tree. that has the following features:
+// § The caller can set or get an input file for the whole pipeline; it is set to stdin by default
+// § The caller can set or get an output file for the whole pipeline; it is set to stdin by default
+// § The caller can add one or more commands, which are understood to be piped together(that is, the output of the first command is piped to the input of the second command, and so on)
+// § Each command can have an arbitrary number of arguments, which can be added one - by - one
 #ifndef PIPELINE_H
 #define PIPELINE_H
+#define MAX_ARGS 10
 
 #include <stdbool.h>
 
+struct pipeline_node // pipeline node is a command with args, input file, output file, and a pointer to the next pipeline node
+{
+    char *command;
+    char *args[MAX_ARGS];
+    char *input;
+    char *output;
+    struct pipeline_node *next;
+};
 
-typedef struct pipeline pipeline_t;
+struct pipeline // pipeline is a linked list of pipeline nodes
+{
+    struct pipeline_node *head;
+    int length;
+};
 
+typedef struct pipeline pipeline_t; // pipeline_t is a pointer to a pipeline
 
 /*
- * Create a new pipeline node.
+ * Create a new pipeline object.
  *
  * Parameters:
- *  command: the command to execute
- *  input: the input file
- *  output: the output file
- *  next: the next pipeline node
- * 
+ *  None
+ *
  * Returns:
- *  the new pipeline node
+ *  New pipeline object
+ *
+ * Note:
+ * The pipeline object is a linked list of pipeline nodes.
+ * Each pipeline node contains a command, input file, output file,
+ * and a pointer to the next pipeline node.
+ * The last pipeline node has a NULL next pointer.
+ * The new created pipeline object must be freed by the caller.
  */
-pipeline_t *pipeline_new(char *command, char *input, char *output, pipeline_t *next);
-
+pipeline_t *pipeline_new();
 
 /*
- * Free a pipeline node.
+ * Free a pipeline object.
  *
  * Parameters:
- *  pipeline: the pipeline node to free
- * 
+ *  pipeline: the pipeline object to free
+ *
  * Returns:
  *  None
  */
 void pipeline_free(pipeline_t *pipeline);
 
 /*
- * Set the command of a pipeline node.
+ * Set the input file of a pipeline object.
  *
  * Parameters:
- *  pipeline: the pipeline node
- *  command: the command to set
- * 
- * Returns:
- *  None
- */
-void pipeline_set_command(pipeline_t *pipeline, char *command);
-
-
-/*
- * Set the input file of a pipeline node.
- *
- * Parameters:
- *  pipeline: the pipeline node
+ *  pipeline: the pipeline object
  *  input: the input file to set
- * 
+ *
  * Returns:
  *  None
  */
 void pipeline_set_input(pipeline_t *pipeline, char *input);
 
-
 /*
- * Set the output file of a pipeline node.
+ * Set the output file of a pipeline object.
  *
  * Parameters:
- *  pipeline: the pipeline node
+ *  pipeline: the pipeline object
  *  output: the output file to set
- * 
+ *
  * Returns:
  *  None
  */
 void pipeline_set_output(pipeline_t *pipeline, char *output);
 
 /*
- * Get the input file of a pipeline node.
+ * Get the input file of a pipeline object.
  *
  * Parameters:
- *  pipeline: the pipeline node
+ *  pipeline: the pipeline object
  *
  * Returns:
- *  the input file of the pipeline node
+ *  the input file of the pipeline object
  */
 char *pipeline_get_input(pipeline_t *pipeline);
 
 /*
- * Get the output file of a pipeline node.
+ * Get the output file of a pipeline object.
  *
  * Parameters:
- *  pipeline: the pipeline node
+ *  pipeline: the pipeline object
  *
  * Returns:
- *  the output file of the pipeline node
+ *  the output file of the pipeline object
  */
 char *pipeline_get_output(pipeline_t *pipeline);
 
 /*
- * Print the contents of a command to stdout
+ * Add a new command to a pipeline object.
  *
  * Parameters:
- *  command: the command to print
- * 
+ *  pipeline: the pipeline object
+ *  command: the command to add
+ *
  * Returns:
  *  None
  */
-void print_command(char *command);
+void pipeline_add_command(pipeline_t *pipeline, char *command);
 
 /*
- * Compares two commands
+ * Get the command at the given index in a pipeline object.
  *
  * Parameters:
- *  command1: the first command
- *  command2: the second command
- * 
+ *  pipeline: the pipeline object
+ *  index: the index of the command to get
+ *
  * Returns:
- *  true if the commands are equal, false otherwise
+ *  the command at the given index in the pipeline object
  */
-bool compare_commands(char *command1, char *command2);
+char *pipeline_get_command(pipeline_t *pipeline, int index);
 
 /*
- * Returns true if this command is empty, false otherwise.  An "empty" command has:
- *    input = stdin
- *    output = stdout
- *    no arguments
- * 
- * Parameters:
- *  command: the command to check
- * 
- * Returns:
- *  true if the command is empty, false otherwise
- */
-bool is_empty_command(char *command);
-
-/*
- * Return the count of arguments on this command
+ * Get the number of commands in a pipeline object.
  *
  * Parameters:
- *  command: the command to check
- * 
+ *  pipeline: the pipeline object
+ *
  * Returns:
- *  the count of arguments on this command
+ *  the number of commands in the pipeline object
  */
-int count_args(char *command);
+int pipeline_command_count(pipeline_t *pipeline);
 
 /*
- * Append a new argument to this command.
+ * Print the contents of a pipeline object to stdout
  *
  * Parameters:
- *  command: the command to append to
- *  arg: the argument to append
- * 
+ *  pipeline: the pipeline object to print
+ *
  * Returns:
- *  the new command
+ *  None
  */
-char *append_arg(char *command, char *arg);
+void pipeline_print(pipeline_t *pipeline);
 
-/*
- * Get a pointer to the NULL-terminated argv vector for this command
- *
- * Parameters:
- *   cmd     The command to get the argv vector for
- * 
- * Returns:
- *  A pointer to the NULL-terminated argv vector for this command
- */
-char **get_argv(char *cmd);
+#endif /* PIPELINE_H */
