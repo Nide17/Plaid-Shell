@@ -50,67 +50,82 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
 
         else if (*input)
         {
-            // Find the end of the word
-            char *word = malloc(strlen(input) + 1);
-            const char *end = input + 1;
-            while (*end != '\0' && !isspace(*end) && *end != '<' && *end != '>' && *end != '|')
-                end++;
+            if (*input == '"')
+            {
+                const char *quotedEnd = input + 1;
+                while (*quotedEnd != '"')
+                {
+                    quotedEnd++;
+                    if (*quotedEnd == '\0')
+                    {
+                        snprintf(errmsg, errmsg_sz, "Position %d: unmatched quote", (int)(input - errmsg));
+                        CL_free(tokens);
+                        return NULL;
+                    }
+                }
 
-            // Allocate a new token
-            snprintf(word, end - input + 1, "%s", input);
-            Token tok = {TOK_WORD, strdup(word)};
-            
-            // append the token to the list of tokens
-            CL_append(tokens, (Token)tok);
+                // Allocate a new token
+                char *quotedWord = malloc(strlen(input) + 1);
+                snprintf(quotedWord, quotedEnd - input + 2, "%s", input);
+                Token tok = {TOK_QUOTED_WORD, strdup(quotedWord)};
+                CL_append(tokens, (Token)tok);
+                input = quotedEnd + 1;
+                free(quotedWord);
+            }
 
-            // Advance the input pointer
-            input = end;
+            else if (*input == '<')
+            {
+                Token tok = {TOK_LESSTHAN, NULL};
+                CL_append(tokens, (Token)tok);
+                input++;
+            }
 
-            // Free the word 
-            free(word);
+            else if (*input == '>')
+            {
+                Token tok = {TOK_GREATERTHAN, NULL};
+                CL_append(tokens, (Token)tok);
+                input++;
+            }
 
-        }
-        else if (*input == '"')
-        {
-            // Find the end of the quoted word
-            const char *end = input + 1;
-            while (*end != '"' && *end != '\0')
-                end++;
+            else if (*input == '|')
+            {
+                Token tok = {TOK_PIPE, NULL};
+                CL_append(tokens, (Token)tok);
+                input++;
+            }
 
-            // Allocate a new token
-            Token tok = {TOK_QUOTED_WORD, strndup(input + 1, end - input - 1)};
+            else
+            {
+                // Find the end of the word
+                char *word = malloc(strlen(input) + 1);
+                const char *end = input;
 
-            // append the token to the list of tokens
-            CL_append(tokens, (Token)tok);
+                while (*end != '\0' && !isspace(*end) && *end != '<' && *end != '>' && *end != '|' && *end != '"')
+                {
+                    // if escape character
+                    if (*end == '\\')
+                    {
+                        end++;
+                        if (*end == '\0')
+                        {
+                            snprintf(errmsg, errmsg_sz, "Position %d: unmatched escape character", (int)(input - errmsg));
+                            CL_free(tokens);
+                            return NULL;
+                        }
+                    }
+                    end++;
+                }
 
-            // Advance the input pointer
-            input = end + 1;
-        }
-        else if (*input == '<')
-        {
-            Token tok = {TOK_LESSTHAN, NULL};
-            CL_append(tokens, (Token)tok);
-            input++;
-        }
-        else if (*input == '>')
-        {
-            Token tok = {TOK_GREATERTHAN, NULL};
-            CL_append(tokens, (Token)tok);
-            input++;
-        }
-        else if (*input == '|')
-        {
-            Token tok = {TOK_PIPE, NULL};
-            CL_append(tokens, (Token)tok);
-            input++;
-        }
-        else
-        {
-            Token tok = {TOK_END, NULL};
-            CL_append(tokens, (Token)tok);
-            snprintf(errmsg, errmsg_sz, "Position %d: unexpected character %c", (int)(input - errmsg), *input);
-            CL_free(tokens);
-            return NULL;
+                // Allocate a new token
+                if (end - input > 0)
+                {
+                    snprintf(word, end - input + 1, "%s", input);
+                    Token tok = {TOK_WORD, strdup(word)};
+                    CL_append(tokens, (Token)tok);
+                }
+                input = end;
+                free(word);
+            }
         }
     }
 
@@ -133,18 +148,11 @@ TokenType TOK_next_type(CList tokens)
 // Documented in .h file
 Token TOK_next(CList tokens)
 {
-    if (tokens == NULL)
-    {
-        Token tok = {TOK_END, NULL};
-        return tok;
-    }
-
     Token nextToken = {TOK_END, NULL};
+    if (tokens == NULL || tokens->head == NULL)
+        return nextToken;
 
-    if (tokens->head != NULL)
-        nextToken = tokens->head->tok_elt;
-
-    return nextToken;
+    return tokens->head->tok_elt;
 }
 
 // Documented in .h file
@@ -162,8 +170,10 @@ void print_element(int pos, Token tok, void *cb_data)
 {
     Token *data = (Token *)cb_data;
 
-    // Token
-    printf("%s: %d %s\n", (char *)data, pos, TT_to_str(tok.type));
+    if (tok.type == TOK_END)
+        printf("%s: %d %s\n", (char *)data, pos, TT_to_str(tok.type));
+    else
+        printf("%s: %d %s %s\n", (char *)data, pos, TT_to_str(tok.type), tok.text);
 }
 
 void TOK_print(CList tokens)

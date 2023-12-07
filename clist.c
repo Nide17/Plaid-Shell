@@ -129,7 +129,6 @@ Token CL_pop(CList list)
 // Documented in .h file
 void CL_append(CList list, Token tok)
 {
-
   if (list == NULL)
     return;
 

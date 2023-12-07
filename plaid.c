@@ -17,6 +17,9 @@
 #include <assert.h>
 
 // #include "parser.h"
+#include "clist.h"
+#include "tokenize.h"
+#include "token.h"
 
 #define MAX_ARGS 20
 
@@ -189,6 +192,8 @@ void execute_command(int argc, char *argv[])
 int main(int argc, char *argv[])
 {
     char *input = NULL;
+    CList list = CL_new();
+    char errmsg[100];
 
     fprintf(stdout, "Welcome to Plaid Shell!\n");
     const char *prompt = "#> ";
@@ -209,19 +214,23 @@ int main(int argc, char *argv[])
         if (*input == '\0')
             continue;
 
-        // parse the input into arguments
-        // argc = parse_input(input, argv, MAX_ARGS);
-        argc = 1;
-        argv[0] = input;
+        // tokenize the input into arguments
+        list = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
+        TOK_print(list);
 
-        // if the input was empty, go back to the prompt
-        if (argc == -1)
-            printf(" Error: %s\n", argv[0]);
+        // // parse the input into arguments
+        // // argc = parse_input(input, argv, MAX_ARGS);
+        // argc = 1;
+        // argv[0] = input;
 
-        // if the input was not empty, execute the command
-        else
-            for (int i = 0; i < argc; i++)
-                execute_command(argc, argv);
+        // // if the input was empty, go back to the prompt
+        // if (argc == -1)
+        //     printf(" Error: %s\n", argv[0]);
+
+        // // if the input was not empty, execute the command
+        // else
+        //     for (int i = 0; i < argc; i++)
+        //         execute_command(argc, argv);
     }
 
     return 0;
