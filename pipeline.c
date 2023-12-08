@@ -18,6 +18,34 @@
 // § Each command can have an arbitrary number of arguments, which can be added one - by - one
 
 /*
+ * Create a new node for the pipeline object.
+ *
+ * Parameters:
+ *  None
+ *
+ * Returns:
+ *  New node for the pipeline object
+ */
+pipeline_node_t *pipeline_node_new()
+{
+    // allocate a new pipeline node
+    pipeline_node_t *node = (pipeline_node_t *)malloc(sizeof(pipeline_node_t));
+    assert(node != NULL);
+
+    // initialize the pipeline node
+    node->next = NULL;
+
+    // initialize the arguments
+    for (int i = 0; i < MAX_ARGS; i++)
+    {
+        node->args[i] = NULL;
+    }
+
+    // return the new pipeline node
+    return node;
+}
+
+/*
  * Create a new pipeline object.
  *
  * Parameters:
@@ -28,12 +56,17 @@
  */
 pipeline_t *pipeline_new()
 {
+    // allocate a new pipeline object
     pipeline_t *pipeline = (pipeline_t *)malloc(sizeof(pipeline_t));
     assert(pipeline != NULL);
 
+    // initialize the pipeline object
     pipeline->head = NULL;
     pipeline->length = 0;
+    pipeline->input = NULL;
+    pipeline->output = NULL;
 
+    // return the new pipeline object
     return pipeline;
 }
 
@@ -48,26 +81,25 @@ pipeline_t *pipeline_new()
  */
 void pipeline_free(pipeline_t *pipeline)
 {
-    if (pipeline == NULL)
-        return;
+    assert(pipeline != NULL);
 
-    // deallocate all the nodes in the pipeline
-    struct pipeline_node *this_node = pipeline->head;
+    // free all the nodes in the pipeline
+    pipeline_node_t *this_node = pipeline->head;
 
-    // traverse the pipeline, deallocating each node
+    // traverse the pipeline, freeing each node
     while (this_node != NULL)
     {
         // save a pointer to the next node
-        struct pipeline_node *next_node = this_node->next;
+        pipeline_node_t *next_node = this_node->next;
 
-        // deallocate this node
+        // free the current node
         free(this_node);
 
         // advance to the next node
         this_node = next_node;
     }
 
-    // deallocate the pipeline object
+    // free the pipeline object
     free(pipeline);
 }
 
@@ -147,42 +179,98 @@ void pipeline_add_command(pipeline_t *pipeline, char *command)
 {
     assert(pipeline != NULL);
 
-    // create a new pipeline node
-    struct pipeline_node *new_node = (struct pipeline_node *)malloc(sizeof(struct pipeline_node));
+    // allocate a new node
+    pipeline_node_t *new_node = pipeline_node_new();
     assert(new_node != NULL);
 
-    // set the command of the new node
-    new_node->command = command;
-
-    // set the input and output of the new node to NULL
-    new_node->input = NULL;
-    new_node->output = NULL;
-
-    // set the next pointer of the new node to NULL
+    // initialize the new node
+    new_node->args[0] = command;
     new_node->next = NULL;
 
-    // add the new node to the end of the pipeline
+    // add the new node to the pipeline
     if (pipeline->head == NULL)
     {
-        // the pipeline is empty, so set the head to the new node
+        // this is the first node in the pipeline
         pipeline->head = new_node;
     }
     else
     {
-        // the pipeline is not empty, so find the last node
-        struct pipeline_node *last_node = pipeline->head;
-        
-        while (last_node->next != NULL)
+        // find the last node in the pipeline
+        pipeline_node_t *this_node = pipeline->head;
+        while (this_node->next != NULL)
         {
-            last_node = last_node->next;
+            this_node = this_node->next;
         }
 
-        // set the next pointer of the last node to the new node
-        last_node->next = new_node;
+        // add the new node to the end of the pipeline
+        this_node->next = new_node;
     }
 
     // increment the length of the pipeline
     pipeline->length++;
+}
+
+/*
+ * Add a new node to a pipeline object.
+ *
+ * Parameters:
+ *  pipeline: the pipeline object
+ *  node: the node to add
+ *
+ * Returns:
+ *  None
+ */
+void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node)
+{
+    assert(pipeline != NULL);
+    assert(node != NULL);
+
+    // add the node to the pipeline
+    if (pipeline->head == NULL)
+    {
+        // this is the first node in the pipeline
+        pipeline->head = node;
+    }
+    else
+    {
+        // find the last node in the pipeline
+        pipeline_node_t *this_node = pipeline->head;
+        while (this_node->next != NULL)
+        {
+            this_node = this_node->next;
+        }
+
+        // add the new node to the end of the pipeline
+        this_node->next = node;
+    }
+
+    // increment the length of the pipeline
+    pipeline->length++;
+}
+
+/*
+ * Add a new argument to the current node in a pipeline object.
+ *
+ * Parameters:
+ *  pipeline: the pipeline object
+ *  arg: the argument to add
+ *
+ * Returns:
+ *  None
+ */
+void pipeline_node_add_arg(pipeline_node_t *node, char *arg)
+{
+    assert(node != NULL);
+
+    // find the first NULL argument in the node
+    int i = 0;
+    while (node->args[i] != NULL)
+    {
+        i++;
+    }
+
+    // add the argument to the node
+    node->args[i] = arg;
 }
 
 /*
@@ -201,14 +289,14 @@ char *pipeline_get_command(pipeline_t *pipeline, int index)
     assert(index >= 0 && index < pipeline->length);
 
     // traverse the pipeline until we find the node at the given index
-    struct pipeline_node *this_node = pipeline->head;
+    pipeline_node_t *this_node = pipeline->head;
     for (int i = 0; i < index; i++)
     {
         this_node = this_node->next;
     }
 
-    // return the command of the node at the given index
-    return this_node->command;
+    // return the command at the given index
+    return this_node->args[0];
 }
 
 /*
@@ -240,25 +328,22 @@ void pipeline_print(pipeline_t *pipeline)
     assert(pipeline != NULL);
 
     // print the input file
-    printf("input: %s\n", pipeline->input);
+    printf("Input: %s\n", pipeline->input);
 
     // print the output file
-    printf("output: %s\n", pipeline->output);
+    printf("Output: %s\n", pipeline->output);
 
     // print the commands
-    struct pipeline_node *this_node = pipeline->head;
+    pipeline_node_t *this_node = pipeline->head;
     while (this_node != NULL)
     {
         // print the command
-        printf("command: %s\n", this_node->command);
-
-        // print the input file
-        printf("input: %s\n", this_node->input);
-
-        // print the output file
-        printf("output: %s\n", this_node->output);
+        printf("Command: %s\n", this_node->args[0]);
 
         // advance to the next node
         this_node = this_node->next;
     }
+
+    // print the length
+    printf("Length: %d\n", pipeline->length);
 }

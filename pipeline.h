@@ -13,16 +13,11 @@
 // § Each command can have an arbitrary number of arguments, which can be added one - by - one
 #ifndef PIPELINE_H
 #define PIPELINE_H
-#define MAX_ARGS 10
-
-#include <stdbool.h>
+#define MAX_ARGS 20
 
 struct pipeline_node // pipeline node is a command with args, input file, output file, and a pointer to the next pipeline node
 {
-    char *command;
     char *args[MAX_ARGS];
-    char *input;
-    char *output;
     struct pipeline_node *next;
 };
 
@@ -30,9 +25,23 @@ struct pipeline // pipeline is a linked list of pipeline nodes
 {
     struct pipeline_node *head;
     int length;
+    char *input;
+    char *output;
 };
 
-typedef struct pipeline pipeline_t; // pipeline_t is a pointer to a pipeline
+typedef struct pipeline_node pipeline_node_t; // pipeline_node_t is a pointer to a pipeline node
+typedef struct pipeline pipeline_t;           // pipeline_t is a pointer to a pipeline
+
+/*
+ * Create a new node for the pipeline object.
+ *
+ * Parameters:
+ *  None
+ *
+ * Returns:
+ *  New node for the pipeline object
+ */
+pipeline_node_t *pipeline_node_new();
 
 /*
  * Create a new pipeline object.
@@ -120,6 +129,30 @@ char *pipeline_get_output(pipeline_t *pipeline);
  *  None
  */
 void pipeline_add_command(pipeline_t *pipeline, char *command);
+
+/*
+ * Add a new node to a pipeline object.
+ *
+ * Parameters:
+ *  pipeline: the pipeline object
+ *  node: the node to add
+ *
+ * Returns:
+ *  None
+ */
+void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node);
+
+    /*
+     * Add a new argument to the current node in a pipeline object.
+     *
+     * Parameters:
+     *  node: the current node in the pipeline object
+     *  arg: the argument to add
+     *
+     * Returns:
+     *  None
+     */
+    void pipeline_node_add_arg(pipeline_node_t *node, char *arg);
 
 /*
  * Get the command at the given index in a pipeline object.

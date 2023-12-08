@@ -23,12 +23,14 @@
 #define MAX_ARGS 20
 
 /*
- * Handles the exit or quit commands, by exiting the shell. Does not
- * return.
+ * Handles the exit or quit commands, by exiting the shell. Does not return.
  *
  * Parameters:
  *   tok_len     The length of the argv vector
  *   argv[]   The argument vector
+ * 
+ * Returns:
+ *  0 on success, 1 on failure
  */
 static int fn_exit(int tok_len, char *argv[])
 {
@@ -195,7 +197,7 @@ int main(int tok_len, char *argv[])
     char errmsg[100];
 
     fprintf(stdout, "Welcome to Plaid Shell!\n");
-    const char *prompt = "“#? ";
+    const char *prompt = "#? ";
 
     // main loop of the shell - read, parse, execute commands
     while (1)
@@ -215,7 +217,7 @@ int main(int tok_len, char *argv[])
 
         // tokenize the input into arguments
         list = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
-        // TOK_print(list);
+        TOK_print(list);
 
         int tok_len = CL_length(list);
 
@@ -223,10 +225,11 @@ int main(int tok_len, char *argv[])
         if (tok_len == 0)
             printf(" Error: %s\n", CL_nth(list, 0).text);
 
-        // // if the input was not empty, execute the command
-        // else
-        //     for (int i = 0; i < tok_len; i++)
-        //         execute_command(tok_len, argv);
+        else
+        {
+            TOK_print(list);
+        }
+        
     }
 
     return 0;
