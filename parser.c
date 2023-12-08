@@ -31,7 +31,7 @@ pipeline_t *parse_tokens(CList tokens)
     pipeline->output = NULL;
 
     // pipeline node
-    struct pipeline_node *node = pipeline_node_new();
+    pipeline_node_t *node = NULL;
 
     // add each token to the current pipeline node until a pipe token is found
     for (int i = 0; i < tokens->length; i++)
@@ -39,17 +39,34 @@ pipeline_t *parse_tokens(CList tokens)
         // get the nth token from the list
         Token tok = CL_nth(tokens, i);
 
-        while (tok.type != TOK_PIPE && tok.type != TOK_END)
+        if (tok.type == TOK_PIPE || tok.type == TOK_END)
         {
+            // add the current node to the pipeline when encountering a pipe or end token
+            if (node != NULL)
+            {
+                pipeline_add_node(pipeline, node);
+                node = NULL;
+            }
+        }
+        else
+        {
+            // create a new node for each command
+            if (node == NULL)
+            {
+                node = pipeline_node_new();
+                assert(node != NULL);
+            }
+
             // add the token to the current node
             pipeline_node_add_arg(node, tok.text);
-            i++;
-            tok = CL_nth(tokens, i);
         }
+    }
 
-        // add the current node to the pipeline
+    // Add the final node if it exists after the loop ends
+    if (node != NULL)
+    {
         pipeline_add_node(pipeline, node);
-    }    
+    }
 
     // return the new pipeline object
     return pipeline;

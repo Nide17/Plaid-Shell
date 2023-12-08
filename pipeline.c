@@ -92,8 +92,11 @@ void pipeline_free(pipeline_t *pipeline)
         // save a pointer to the next node
         pipeline_node_t *next_node = this_node->next;
 
-        // free the current node
-        free(this_node);
+        // free the current node if exist
+        if(this_node)
+        {
+            free(this_node);
+        }
 
         // advance to the next node
         this_node = next_node;

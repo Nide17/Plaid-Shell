@@ -136,7 +136,7 @@ int test_parse_tokens_pipe_token()
 
     tokens = TOK_tokenize_input("echo a b | grep c", errmsg, sizeof(errmsg));
     pipeline = parse_tokens(tokens);
-    test_assert(CL_length(tokens) == 5);
+    test_assert(CL_length(tokens) == 6);
     test_assert(TOK_next_type(tokens) == TOK_WORD);
     test_assert(strcmp_sp(TOK_next(tokens).text, "echo") == 0);
 
@@ -166,6 +166,8 @@ int test_parse_tokens_pipe_token()
     test_assert(pipeline->length == 2);
     pipeline_free(pipeline);
     CL_free(tokens);
+
+    // more than two pipes testing
 
     return 1;
 

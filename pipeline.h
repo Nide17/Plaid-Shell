@@ -21,15 +21,16 @@ struct pipeline_node // pipeline node is a command with args, input file, output
     struct pipeline_node *next;
 };
 
+typedef struct pipeline_node pipeline_node_t; // pipeline_node_t is a pointer to a pipeline node
 struct pipeline // pipeline is a linked list of pipeline nodes
 {
-    struct pipeline_node *head;
+    pipeline_node_t *head;
     int length;
     char *input;
     char *output;
 };
 
-typedef struct pipeline_node pipeline_node_t; // pipeline_node_t is a pointer to a pipeline node
+
 typedef struct pipeline pipeline_t;           // pipeline_t is a pointer to a pipeline
 
 /*
