@@ -8,7 +8,7 @@ void run_test_cases()
     // Create a Pipeline
     pipeline_t *pipeline = pipeline_new();
     assert(pipeline != NULL);
-    assert(pipeline_command_count(pipeline) == 0);
+    assert(pipeline->length == 0);
     assert(pipeline_get_input(pipeline) == NULL);
     assert(pipeline_get_output(pipeline) == NULL);
 
@@ -21,7 +21,7 @@ void run_test_cases()
     // Add Commands to Pipeline
     pipeline_add_command(pipeline, "pwd");
     pipeline_add_command(pipeline, "ls");
-    assert(pipeline_command_count(pipeline) == 2);
+    assert(pipeline->length == 2);
     assert(strcmp(pipeline_get_command(pipeline, 0), "pwd") == 0);
     assert(strcmp(pipeline_get_command(pipeline, 1), "ls") == 0);
 
@@ -41,7 +41,7 @@ void run_test_cases()
         pipeline_add_command(pipeline, long_command);
     }
 
-    assert(pipeline_command_count(pipeline) == MAX_ARGS);
+    assert(pipeline->length == MAX_ARGS);
     assert(pipeline_get_command(pipeline, 0) != NULL);
 
     pipeline_free(pipeline);

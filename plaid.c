@@ -6,7 +6,6 @@
  * Author: Howdy Pierce <howdy@sleepymoose.net>
  * Co-Author: Niyomwungeri Parmenide ISHIMWE <parmenin@andrew.cmu.edu>
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <readline/readline.h>
@@ -19,103 +18,10 @@
 #include "clist.h"
 #include "tokenize.h"
 #include "token.h"
+#include "pipeline.h"
+#include "parser.h"
 
 #define MAX_ARGS 20
-
-/*
- * Handles the exit or quit commands, by exiting the shell. Does not return.
- *
- * Parameters:
- *   tok_len     The length of the argv vector
- *   argv[]   The argument vector
- * 
- * Returns:
- *  0 on success, 1 on failure
- */
-static int fn_exit(int tok_len, char *argv[])
-{
-    // if exit or quit COMMAND - EXIT
-    if ((tok_len == 1 && strcmp(argv[0], "exit") == 0) || (strcmp(argv[0], "quit") == 0))
-        exit(0);
-
-    return 0;
-}
-
-/*
- * Handles the author command, by printing the author of this program
- * to stdout
- *
- * Parameters:
- *   tok_len     The length of the argv vector
- *   argv[]   The argument vector, which is ignored
- *
- * Returns:
- *   0 on success, 1 on failure
- */
-static int fn_author(int tok_len, char *argv[])
-{
-    // if author command, print the author
-    if (tok_len == 1 && strcmp(argv[0], "author") == 0)
-    {
-        printf("Niyomwungeri Parmenide Parmenide\n");
-        return 0;
-    }
-
-    // author command failed
-    return 1;
-}
-
-/*
- * Handles the cd, by setting cwd to argv[1], which must exist.
- *
- * Parameters:
- *   tok_len     The length of the argv vector
- *   argv[]   The argument vector, which must have either 1 or 2 arguments.
- *
- * Returns:
- *   0 on success, 1 on failure
- */
-static int fn_cd(int tok_len, char *argv[])
-{
-    // if the first arg is cd COMMAND
-    if (tok_len == 2 && strcmp(argv[0], "cd") == 0)
-    {
-        // Go to the directory specified by argv[1]
-        if (chdir(argv[1]) == 0)
-            return 0;
-    }
-
-    // cd command failed
-    return 1;
-}
-
-/*
- * Handles the pwd, by printing the cwd to the supplied file
- * descriptor
- *
- * Parameters (which are all ignored):
- *   tok_len     The length of the argv vector
- *   argv[]   The argument vector
- *
- * Returns:
- *   Always returns 0, since it always succeeds
- */
-static int fn_pwd(int tok_len, char *argv[])
-{
-    // if the first arg is pwd COMMAND
-    if (tok_len == 1 && strcmp(argv[0], "pwd") == 0)
-    {
-        char currentDir[1024];
-        getcwd(currentDir, sizeof(currentDir));
-
-        // print the current directory
-        printf("%s \n", currentDir);
-        return 0;
-    }
-
-    // pwd command failed
-    return 1;
-}
 
 /*
  * Process an external command, by forking and executing
@@ -128,7 +34,7 @@ static int fn_pwd(int tok_len, char *argv[])
  * Returns:
  *   The child's exit value, or -1 on error
  */
-static int forkexec_external_cmd(int tok_len, char *argv[])
+static int forkexec_cmd(char *argv[])
 {
     // start a child process to execute the command
     pid_t pid = fork();
@@ -136,7 +42,14 @@ static int forkexec_external_cmd(int tok_len, char *argv[])
     // if the child process, execute the command
     if (pid == 0)
     {
-        execvp(argv[0], argv);
+        // execute the command if it only exists
+        if (execvp(argv[0], argv) == -1)
+        {
+            printf("%s: Command not found \n", argv[0]);
+            exit(-1);
+        }
+
+        // exit the child process
         exit(0);
     }
 
@@ -147,53 +60,83 @@ static int forkexec_external_cmd(int tok_len, char *argv[])
         waitpid(pid, &status, 0);
         return WEXITSTATUS(status);
     }
-    // fork failed
     else
     {
+        printf("Error: fork failed \n");
         fprintf(stderr, "Child %d exited with status %d \n", pid, WEXITSTATUS(pid));
         return -1;
     }
 }
 
 /*
- * Parses one input line, and executes it
+ * Executes a pipeline of commands
  *
  * Parameters:
- *   tok_len     The length of the argv vector, which must be >= 1
- *   argv[]   The argument vector
+ *   pipeline   The pipeline to execute
  */
-void execute_command(int tok_len, char *argv[])
+void execute_pipeline(pipeline_t *pipeline)
 {
-    assert(tok_len >= 1);
-    printf("tok_len: %d \n", tok_len);
-    printf("argv[0]: %s \n", argv[0]);
+    // if the pipeline is empty, return
+    if (pipeline == NULL)
+        return;
 
-    // If exit or quit command
-    if (strcmp(argv[0], "exit") == 0 || strcmp(argv[0], "quit") == 0)
-        fn_exit(tok_len, argv);
-
-    // If author command
-    else if (strcmp(argv[0], "author") == 0)
-        fn_author(tok_len, argv);
-
-    // If cd command
-    else if (strcmp(argv[0], "cd") == 0)
-        fn_cd(tok_len, argv);
-
-    // If pwd command
-    else if (strcmp(argv[0], "pwd") == 0)
-        fn_pwd(tok_len, argv);
-
-    // If command is not built-in, execute it as a child process
+    // if the pipeline is not empty, execute the commands
     else
-        forkexec_external_cmd(tok_len, argv);
-}
+    {
+        // execute each command in the pipeline
+        for (int i = 0; i < pipeline->length; i++)
+        {
+            // get the command at the given index
+            char *command = pipeline_get_command(pipeline, i);
 
+            // if the command is exit or quit, exit the shell
+            if (strcmp(command, "exit") == 0 || strcmp(command, "quit") == 0)
+                exit(0);
+
+            // if the command is author, print the author
+            else if (strcmp(command, "author") == 0)
+                printf("Niyomwungeri Parmenide Parmenide\n");
+
+            // if the command is cd, change the directory
+            else if (strcmp(command, "cd") == 0)
+            {
+                // Go to the directory specified by argv[1]
+                if (chdir(pipeline->head->args[1]) == 0)
+                    printf("Directory changed to %s \n", pipeline->head->args[1]);
+
+                else
+                    fprintf(stderr, "Error: cd command failed \n");
+            }
+
+            // if the command is pwd, print the current directory
+            else if (strcmp(command, "pwd") == 0)
+            {
+                char currentDir[1024];
+                getcwd(currentDir, sizeof(currentDir));
+
+                // print the current directory
+                printf("%s \n", currentDir);
+            }
+
+            // if the command is not a built-in command, execute it
+            else
+            {
+                // fork and execute the command
+                int status = forkexec_cmd(pipeline->head->args);
+
+                // if the command failed, print an error message
+                if (status == -1)
+                    printf("Error: command failed \n");
+            }
+        }
+    }
+}
 
 int main(int tok_len, char *argv[])
 {
     char *input = NULL;
-    CList list = CL_new(); // list of tokens
+    CList tokens = NULL;         // list of tokens
+    pipeline_t *pipeline = NULL; // pipeline of commands
     char errmsg[100];
 
     fprintf(stdout, "Welcome to Plaid Shell!\n");
@@ -208,28 +151,41 @@ int main(int tok_len, char *argv[])
         // store the input in the history buffer
         add_history(input);
 
-        // if the user entered nothing, go back to the prompt
-        if (input == NULL)
-            exit(0);
-
-        if (*input == '\0')
+        if(!input || *input == '\0')
+        {
+            free(input);
             continue;
+        }
 
         // tokenize the input into arguments
-        list = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
-        TOK_print(list);
-
-        int tok_len = CL_length(list);
+        tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
 
         // if the input was empty, go back to the prompt
-        if (tok_len == 0)
-            printf(" Error: %s\n", CL_nth(list, 0).text);
+        if (CL_length(tokens) == 0)
+        {
+            free(input);
+            CL_free(tokens);
+            continue;
+        }
 
+        // if the input was not empty, execute the command
         else
         {
-            TOK_print(list);
+            // add the tokens to the pipeline
+            pipeline = parse_tokens(tokens);
+
+            // execute the pipeline
+            execute_pipeline(pipeline);
         }
-        
+
+        // free the input
+        free(input);
+
+        // free the tokens
+        CL_free(tokens);
+
+        // free the pipeline
+        pipeline_free(pipeline);
     }
 
     return 0;

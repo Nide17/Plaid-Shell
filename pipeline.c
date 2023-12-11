@@ -45,6 +45,23 @@ pipeline_node_t *pipeline_node_new()
     return node;
 }
 
+/**
+ * Free a pipeline node.
+ * 
+ * Parameters:
+ *  node: the pipeline node to free
+ * 
+ * Returns:
+ *  None
+ */
+void pipeline_node_free(pipeline_node_t *node)
+{
+    assert(node != NULL);
+
+    // free the pipeline node
+    free(node);
+}
+
 /*
  * Create a new pipeline object.
  *
@@ -92,13 +109,10 @@ void pipeline_free(pipeline_t *pipeline)
         // save a pointer to the next node
         pipeline_node_t *next_node = this_node->next;
 
-        // free the current node if exist
-        if(this_node)
-        {
-            free(this_node);
-        }
+        // free the current node
+        pipeline_node_free(this_node);
 
-        // advance to the next node
+        // move on to the next node
         this_node = next_node;
     }
 
@@ -300,21 +314,6 @@ char *pipeline_get_command(pipeline_t *pipeline, int index)
 
     // return the command at the given index
     return this_node->args[0];
-}
-
-/*
- * Get the number of commands in a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *
- * Returns:
- *  the number of commands in the pipeline object
- */
-int pipeline_command_count(pipeline_t *pipeline)
-{
-    assert(pipeline != NULL);
-    return pipeline->length;
 }
 
 /*

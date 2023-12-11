@@ -44,6 +44,17 @@ typedef struct pipeline pipeline_t;           // pipeline_t is a pointer to a pi
  */
 pipeline_node_t *pipeline_node_new();
 
+/**
+ * Free a pipeline node.
+ * 
+ * Parameters:
+ *  node: the pipeline node to free
+ * 
+ * Returns:
+ *  None
+ */
+void pipeline_node_free(pipeline_node_t *node);
+
 /*
  * Create a new pipeline object.
  *
@@ -166,17 +177,6 @@ void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node);
  *  the command at the given index in the pipeline object
  */
 char *pipeline_get_command(pipeline_t *pipeline, int index);
-
-/*
- * Get the number of commands in a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *
- * Returns:
- *  the number of commands in the pipeline object
- */
-int pipeline_command_count(pipeline_t *pipeline);
 
 /*
  * Print the contents of a pipeline object to stdout

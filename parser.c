@@ -22,13 +22,6 @@ pipeline_t *parse_tokens(CList tokens)
 {
     // allocate a new pipeline object
     pipeline_t *pipeline = pipeline_new();
-    assert(pipeline != NULL);
-
-    // initialize the pipeline object
-    pipeline->head = NULL;
-    pipeline->length = 0;
-    pipeline->input = NULL;
-    pipeline->output = NULL;
 
     // pipeline node
     pipeline_node_t *node = NULL;
@@ -64,9 +57,7 @@ pipeline_t *parse_tokens(CList tokens)
 
     // Add the final node if it exists after the loop ends
     if (node != NULL)
-    {
         pipeline_add_node(pipeline, node);
-    }
 
     // return the new pipeline object
     return pipeline;
