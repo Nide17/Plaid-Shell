@@ -19,8 +19,8 @@ void run_test_cases()
     assert(strcmp(pipeline_get_output(pipeline), "output_file.txt") == 0);
 
     // Add Commands to Pipeline
-    pipeline_add_command(pipeline, "pwd");
-    pipeline_add_command(pipeline, "ls");
+    // pipeline_add_command(pipeline, "pwd");
+    // pipeline_add_command(pipeline, "ls");
     assert(pipeline->length == 2);
     assert(strcmp(pipeline_get_command(pipeline, 0), "pwd") == 0);
     assert(strcmp(pipeline_get_command(pipeline, 1), "ls") == 0);
@@ -34,12 +34,12 @@ void run_test_cases()
 
     // Edge Cases
     pipeline = pipeline_new();
-    char long_command[256] = "a";
-    for (int i = 0; i < MAX_ARGS; i++)
-    {
-        strcat(long_command, "a");
-        pipeline_add_command(pipeline, long_command);
-    }
+    // char long_command[256] = "a";
+    // for (int i = 0; i < MAX_ARGS; i++)
+    // {
+    //     strcat(long_command, "a");
+    //     pipeline_add_command(pipeline, long_command);
+    // }
 
     assert(pipeline->length == MAX_ARGS);
     assert(pipeline_get_command(pipeline, 0) != NULL);

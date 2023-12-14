@@ -90,7 +90,7 @@ int test_parse_tokens_pipe_token()
     test_assert(strcmp(CL_nth(tokens, 0).text, "pwd") == 0);
 
     // Check that the pipeline object has a single node
-    pipeline = parse_tokens(tokens);
+    pipeline = parse_tokens(tokens, errmsg, sizeof(errmsg));
     test_assert(pipeline->head != NULL);
     test_assert(pipeline->head->next == NULL);
 
@@ -109,7 +109,7 @@ int test_parse_tokens_pipe_token()
     CL_free(tokens);
 
     tokens = TOK_tokenize_input("echo a b", errmsg, sizeof(errmsg));
-    pipeline = parse_tokens(tokens);
+    pipeline = parse_tokens(tokens, errmsg, sizeof(errmsg));
     test_assert(CL_length(tokens) == 3);
     test_assert(TOK_next_type(tokens) == TOK_WORD);
     test_assert(strcmp_sp(TOK_next(tokens).text, "echo") == 0);
@@ -135,7 +135,7 @@ int test_parse_tokens_pipe_token()
     CL_free(tokens);
 
     tokens = TOK_tokenize_input("echo a b | grep c", errmsg, sizeof(errmsg));
-    pipeline = parse_tokens(tokens);
+    pipeline = parse_tokens(tokens, errmsg, sizeof(errmsg));
     test_assert(CL_length(tokens) == 6);
     test_assert(TOK_next_type(tokens) == TOK_WORD);
     test_assert(strcmp_sp(TOK_next(tokens).text, "echo") == 0);
@@ -169,7 +169,7 @@ int test_parse_tokens_pipe_token()
 
     // more than two pipes testing
     tokens = TOK_tokenize_input("echo a b | grep c | wc", errmsg, sizeof(errmsg));
-    pipeline = parse_tokens(tokens);
+    pipeline = parse_tokens(tokens, errmsg, sizeof(errmsg));
     test_assert(CL_length(tokens) == 8);
     test_assert(TOK_next_type(tokens) == TOK_WORD);
     test_assert(strcmp_sp(TOK_next(tokens).text, "echo") == 0);

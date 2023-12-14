@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "clist.h"
 
@@ -97,7 +98,7 @@ int CL_length(CList list)
 // Documented in .h file
 void CL_push(CList list, Token tok)
 {
-  if (list == NULL || tok.type == TOK_END)
+  if (list == NULL)
     return;
 
   list->head = _CL_new_node(tok, list->head);
@@ -106,14 +107,14 @@ void CL_push(CList list, Token tok)
 
 // Documented in .h file
 Token CL_pop(CList list)
-{
+{ 
   if (list == NULL)
-    return INVALID_RETURN;
+    return EMPTY_TOKEN;
 
   struct _cl_node *popped_node = list->head;
 
   if (popped_node == NULL)
-    return INVALID_RETURN;
+    return EMPTY_TOKEN;
 
   Token ret = popped_node->tok_elt;
 
@@ -129,6 +130,25 @@ Token CL_pop(CList list)
 // Documented in .h file
 void CL_append(CList list, Token tok)
 {
+  int non_space = 0;
+  // check if the token word or quoted word and it is empty or spaces only
+  if (tok.type == TOK_WORD || tok.type == TOK_QUOTED_WORD)
+  {
+    for (int i = 0; i < strlen(tok.text); i++)
+    {
+      if (!isspace(tok.text[i]))
+      {
+        non_space = 1;
+        break;
+      }
+    }
+  }
+
+  // if the token is empty or spaces only, do nothing
+  if ((tok.type == TOK_WORD || tok.type == TOK_QUOTED_WORD) && non_space == 0)
+    return;
+
+
   if (list == NULL)
     return;
 
@@ -158,11 +178,11 @@ void CL_append(CList list, Token tok)
 Token CL_nth(CList list, int pos)
 {
   if (list == NULL)
-    return INVALID_RETURN;
+    return EMPTY_TOKEN;
 
   // bounds check - if pos is negative or out of bounds, it's an error
   if (pos < -list->length || pos >= list->length)
-    return INVALID_RETURN;
+    return EMPTY_TOKEN;
 
   // convert negative pos to positive by counting from the end of the list
   if (pos < 0)
@@ -178,7 +198,7 @@ Token CL_nth(CList list, int pos)
 
   // if this_node is NULL, we are at the end of the list
   if (this_node == NULL)
-    return INVALID_RETURN;
+    return EMPTY_TOKEN;
 
   // otherwise, this_node points to the node at position pos
   return this_node->tok_elt;
@@ -187,9 +207,6 @@ Token CL_nth(CList list, int pos)
 // Documented in .h file
 bool CL_insert(CList list, Token tok, int pos)
 {
-  if (tok.type == TOK_END)
-    return false;
-
   // convert negative pos to positive by counting from the end of the list
   if (pos < 0)
     pos = list->length + pos + 1;
@@ -231,7 +248,7 @@ bool CL_insert(CList list, Token tok, int pos)
 Token CL_remove(CList list, int pos)
 {
   if (list == NULL)
-    return INVALID_RETURN;
+    return EMPTY_TOKEN;
 
   // If pos is negative, count from the end of the list
   if (pos < 0)
@@ -239,7 +256,7 @@ Token CL_remove(CList list, int pos)
 
   // If pos is still negative or out of bounds, it's an error
   if (pos < 0 || pos >= list->length)
-    return INVALID_RETURN;
+    return EMPTY_TOKEN;
 
   // If pos is 0, just pop the head of the list
   if (pos == 0)
@@ -255,12 +272,12 @@ Token CL_remove(CList list, int pos)
 
   // If this_node is NULL, we are at the end of the list
   if (this_node == NULL)
-    return INVALID_RETURN;
+    return EMPTY_TOKEN;
 
   // if this_node->next is NULL, we are at the end of the list
   struct _cl_node *rm_node = this_node->next;
   if (rm_node == NULL)
-    return INVALID_RETURN;
+    return EMPTY_TOKEN;
 
   else
   {
@@ -274,7 +291,6 @@ Token CL_remove(CList list, int pos)
     list->length--;
 
     // deallocate the node we are removing
-    printf("rm_node->tok_elt.type: %d\n", rm_node->tok_elt.type);
     free(rm_node);
 
     return rm_element;

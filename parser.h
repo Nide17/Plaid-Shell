@@ -1,7 +1,3 @@
-// Create a parser that accepts the list of tokens as an input, and outputs an AST (the Pipeline data structure).
-
-// The parser will be simpler than the recursive descent parser we implemented for ExprWhizz; mine is a simple loop with no recursion
-// The parser will be a function that takes a list of tokens as an input, and outputs a pipeline data structure
 /*
  * parser.h
  *
@@ -21,10 +17,12 @@
  *
  * Parameters:
  *  tokens: the list of tokens to parse
+ *  errmsg: the error message buffer
+ *  errmsg_sz: the size of the error message buffer
  *
  * Returns:
  *  a pointer to the pipeline data structure
  */
-pipeline_t *parse_tokens(CList list);
+pipeline_t *parse_tokens(CList list, char *errmsg, size_t errmsg_sz);
 
 #endif

@@ -5,24 +5,21 @@
  *
  * Author: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
  */
-
-// For plaidsh, a pipeline is an abstract syntax tree. that has the following features:
-// § The caller can set or get an input file for the whole pipeline; it is set to stdin by default
-// § The caller can set or get an output file for the whole pipeline; it is set to stdin by default
-// § The caller can add one or more commands, which are understood to be piped together(that is, the output of the first command is piped to the input of the second command, and so on)
-// § Each command can have an arbitrary number of arguments, which can be added one - by - one
 #ifndef PIPELINE_H
 #define PIPELINE_H
-#define MAX_ARGS 20
+#define MAX_ARGS 50
+
+#include "token.h"
 
 struct pipeline_node // pipeline node is a command with args, input file, output file, and a pointer to the next pipeline node
 {
+    TokenType type;
     char *args[MAX_ARGS];
     struct pipeline_node *next;
 };
 
 typedef struct pipeline_node pipeline_node_t; // pipeline_node_t is a pointer to a pipeline node
-struct pipeline // pipeline is a linked list of pipeline nodes
+struct pipeline                               // pipeline is a linked list of pipeline nodes
 {
     pipeline_node_t *head;
     int length;
@@ -30,8 +27,7 @@ struct pipeline // pipeline is a linked list of pipeline nodes
     char *output;
 };
 
-
-typedef struct pipeline pipeline_t;           // pipeline_t is a pointer to a pipeline
+typedef struct pipeline pipeline_t; // pipeline_t is a pointer to a pipeline
 
 /*
  * Create a new node for the pipeline object.
@@ -46,10 +42,10 @@ pipeline_node_t *pipeline_node_new();
 
 /**
  * Free a pipeline node.
- * 
+ *
  * Parameters:
  *  node: the pipeline node to free
- * 
+ *
  * Returns:
  *  None
  */
@@ -131,40 +127,28 @@ char *pipeline_get_input(pipeline_t *pipeline);
 char *pipeline_get_output(pipeline_t *pipeline);
 
 /*
- * Add a new command to a pipeline object.
+ * Add a new node (command with args) to a pipeline object.
  *
  * Parameters:
  *  pipeline: the pipeline object
- *  command: the command to add
- *
- * Returns:
- *  None
- */
-void pipeline_add_command(pipeline_t *pipeline, char *command);
-
-/*
- * Add a new node to a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *  node: the node to add
+ *  node: the node(command with args) to add
  *
  * Returns:
  *  None
  */
 void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node);
 
-    /*
-     * Add a new argument to the current node in a pipeline object.
-     *
-     * Parameters:
-     *  node: the current node in the pipeline object
-     *  arg: the argument to add
-     *
-     * Returns:
-     *  None
-     */
-    void pipeline_node_add_arg(pipeline_node_t *node, char *arg);
+/*
+ * Add a new argument to the current node in a pipeline object.
+ *
+ * Parameters:
+ *  node: the current node in the pipeline object
+ *  arg: the argument to add
+ *
+ * Returns:
+ *  None
+ */
+void pipeline_node_add_arg(pipeline_node_t *node, char *arg);
 
 /*
  * Get the command at the given index in a pipeline object.

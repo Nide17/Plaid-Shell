@@ -10,7 +10,7 @@
 #ifndef _TOKENIZE_H_
 #define _TOKENIZE_H_
 
-#include <math.h>
+#include <glob.h>
 #include "clist.h"
 #include "token.h"
 
@@ -73,6 +73,18 @@ Token TOK_next(CList tokens);
 void TOK_consume(CList tokens);
 
 /*
+ * For debugging: Prints a single token
+ *
+ * Parameters:
+ *   pos       The position of the token in the list
+ *   tok       The token
+ *   cb_data   The data passed to CL_foreach
+ *
+ * Returns: None
+ */
+void print_element(int pos, Token tok, void *cb_data);
+
+/*
  * For debugging: Prints the list of tokens, one per line
  *
  * Parameters:
@@ -81,5 +93,6 @@ void TOK_consume(CList tokens);
  * Returns: None
  */
 void TOK_print(CList tokens);
+
 
 #endif /* _TOKENIZE_H_ */

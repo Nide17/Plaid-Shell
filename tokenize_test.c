@@ -26,13 +26,7 @@
         }                                                                \
     }
 
-// TOK_WORD,
-// TOK_QUOTED_WORD,
-// TOK_LESSTHAN,
-// TOK_GREATERTHAN,
-// TOK_PIPE,
-// TOK_END
-Token tokens[] = {{TOK_WORD, "ls"}, {TOK_WORD, "-l"}, {TOK_WORD, "-a"}, {TOK_WORD, "foo"}, {TOK_WORD, "bar"}, {TOK_WORD, "baz"}, {TOK_WORD, "qux"}, {TOK_QUOTED_WORD, "foo bar baz"}, {TOK_LESSTHAN, "<"}, {TOK_WORD, "input.txt"}, {TOK_GREATERTHAN, ">"}, {TOK_WORD, "output.txt"}, {TOK_PIPE, "|"}, {TOK_WORD, "wc"}, {TOK_WORD, "-l"}, {TOK_END, NULL}};
+Token tokens[] = {{TOK_WORD, "ls"}, {TOK_WORD, "-l"}, {TOK_WORD, "-a"}, {TOK_WORD, "foo"}, {TOK_WORD, "bar"}, {TOK_WORD, "baz"}, {TOK_WORD, "qux"}, {TOK_QUOTED_WORD, "foo bar baz"}, {TOK_LESSTHAN, "<"}, {TOK_WORD, "input.txt"}, {TOK_GREATERTHAN, ">"}, {TOK_WORD, "output.txt"}, {TOK_PIPE, "|"}, {TOK_WORD, "wc"}, {TOK_WORD, "-l"}, {TOK_WORD, NULL}};
 
 const int num_tokens = sizeof(tokens) / sizeof(tokens[0]);
 
@@ -162,11 +156,11 @@ int test_tok_next_consume()
     }
 
     test_assert(CL_length(list) == 0);
-    test_assert(TOK_next_type(list) == TOK_END);
+    test_assert(TOK_next_type(list) == TOK_WORD && TOK_next(list).text == NULL);
     TOK_consume(list);
-    test_assert(TOK_next_type(list) == TOK_END);
+    test_assert(TOK_next_type(list) == TOK_WORD && TOK_next(list).text == NULL);
     TOK_consume(list);
-    test_assert(TOK_next_type(list) == TOK_END);
+    test_assert(TOK_next_type(list) == TOK_WORD && TOK_next(list).text == NULL);
     TOK_consume(list);
 
     CL_free(list);

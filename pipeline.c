@@ -1,6 +1,8 @@
 /*
  * pipeline.c
  *
+* Functions to create and manipulate a pipeline object.
+ *
  * Author: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
  */
 
@@ -11,49 +13,29 @@
 
 #include "pipeline.h"
 
-// For plaidsh, a pipeline is an abstract syntax tree. that has the following features:
-// § The caller can set or get an input file for the whole pipeline; it is set to stdin by default
-// § The caller can set or get an output file for the whole pipeline; it is set to stdin by default
-// § The caller can add one or more commands, which are understood to be piped together(that is, the output of the first command is piped to the input of the second command, and so on)
-// § Each command can have an arbitrary number of arguments, which can be added one - by - one
-
-/*
- * Create a new node for the pipeline object.
- *
- * Parameters:
- *  None
- *
- * Returns:
- *  New node for the pipeline object
- */
-pipeline_node_t *pipeline_node_new()
+// Documented in .h file
+pipeline_node_t *pipeline_node_new(TokenType type)
 {
     // allocate a new pipeline node
     pipeline_node_t *node = (pipeline_node_t *)malloc(sizeof(pipeline_node_t));
     assert(node != NULL);
 
     // initialize the pipeline node
+    node->type = type;
     node->next = NULL;
 
-    // initialize the arguments
-    for (int i = 0; i < MAX_ARGS; i++)
+    if (type == TOK_WORD || type == TOK_QUOTED_WORD)
     {
-        node->args[i] = NULL;
+        // initialize the arguments
+        for (int i = 0; i < MAX_ARGS; i++)
+            node->args[i] = NULL;
     }
 
     // return the new pipeline node
     return node;
 }
 
-/**
- * Free a pipeline node.
- * 
- * Parameters:
- *  node: the pipeline node to free
- * 
- * Returns:
- *  None
- */
+// Documented in .h file
 void pipeline_node_free(pipeline_node_t *node)
 {
     assert(node != NULL);
@@ -62,15 +44,7 @@ void pipeline_node_free(pipeline_node_t *node)
     free(node);
 }
 
-/*
- * Create a new pipeline object.
- *
- * Parameters:
- *  None
- *
- * Returns:
- *  New pipeline object
- */
+// Documented in .h file
 pipeline_t *pipeline_new()
 {
     // allocate a new pipeline object
@@ -87,18 +61,11 @@ pipeline_t *pipeline_new()
     return pipeline;
 }
 
-/*
- * Free a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object to free
- *
- * Returns:
- *  None
- */
+// Documented in .h file
 void pipeline_free(pipeline_t *pipeline)
 {
-    assert(pipeline != NULL);
+    if (!pipeline)
+        return;
 
     // free all the nodes in the pipeline
     pipeline_node_t *this_node = pipeline->head;
@@ -120,144 +87,53 @@ void pipeline_free(pipeline_t *pipeline)
     free(pipeline);
 }
 
-/*
- * Set the input file of a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *  input: the input file to set
- *
- * Returns:
- *  None
- */
+// Documented in .h file
 void pipeline_set_input(pipeline_t *pipeline, char *input)
 {
     assert(pipeline != NULL);
     pipeline->input = input;
 }
 
-/*
- * Set the output file of a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *  output: the output file to set
- *
- * Returns:
- *  None
- */
+// Documented in .h file
 void pipeline_set_output(pipeline_t *pipeline, char *output)
 {
     assert(pipeline != NULL);
     pipeline->output = output;
 }
 
-/*
- * Get the input file of a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *
- * Returns:
- *  the input file of the pipeline object
- */
+// Documented in .h file
 char *pipeline_get_input(pipeline_t *pipeline)
 {
     assert(pipeline != NULL);
     return pipeline->input;
 }
 
-/*
- * Get the output file of a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *
- * Returns:
- *  the output file of the pipeline object
- */
+// Documented in .h file
 char *pipeline_get_output(pipeline_t *pipeline)
 {
     assert(pipeline != NULL);
     return pipeline->output;
 }
 
-/*
- * Add a new command to a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *  command: the command to add
- *
- * Returns:
- *  None
- */
-void pipeline_add_command(pipeline_t *pipeline, char *command)
-{
-    assert(pipeline != NULL);
-
-    // allocate a new node
-    pipeline_node_t *new_node = pipeline_node_new();
-    assert(new_node != NULL);
-
-    // initialize the new node
-    new_node->args[0] = command;
-    new_node->next = NULL;
-
-    // add the new node to the pipeline
-    if (pipeline->head == NULL)
-    {
-        // this is the first node in the pipeline
-        pipeline->head = new_node;
-    }
-    else
-    {
-        // find the last node in the pipeline
-        pipeline_node_t *this_node = pipeline->head;
-        while (this_node->next != NULL)
-        {
-            this_node = this_node->next;
-        }
-
-        // add the new node to the end of the pipeline
-        this_node->next = new_node;
-    }
-
-    // increment the length of the pipeline
-    pipeline->length++;
-}
-
-/*
- * Add a new node to a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *  node: the node to add
- *
- * Returns:
- *  None
- */
+// Documented in .h file
 void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node)
 {
     assert(pipeline != NULL);
     assert(node != NULL);
 
-    // add the node to the pipeline
+    // add the node to the pipeline: this is the first node in the pipeline
     if (pipeline->head == NULL)
-    {
-        // this is the first node in the pipeline
         pipeline->head = node;
-    }
+        
     else
     {
         // find the last node in the pipeline
         pipeline_node_t *this_node = pipeline->head;
-        while (this_node->next != NULL)
-        {
-            this_node = this_node->next;
-        }
 
-        // add the new node to the end of the pipeline
+        while (this_node->next != NULL)
+            this_node = this_node->next;
+
+        // add the node to the end of the pipeline
         this_node->next = node;
     }
 
@@ -265,41 +141,23 @@ void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node)
     pipeline->length++;
 }
 
-/*
- * Add a new argument to the current node in a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *  arg: the argument to add
- *
- * Returns:
- *  None
- */
+// Documented in .h file
 void pipeline_node_add_arg(pipeline_node_t *node, char *arg)
 {
     assert(node != NULL);
-
-    // find the first NULL argument in the node
-    int i = 0;
-    while (node->args[i] != NULL)
+    if (node->type == TOK_WORD || node->type == TOK_QUOTED_WORD)
     {
-        i++;
-    }
+        // find the first NULL argument
+        int i = 0;
+        while (node->args[i] != NULL)
+            i++;
 
-    // add the argument to the node
-    node->args[i] = arg;
+        // add the argument
+        node->args[i] = arg;
+    }
 }
 
-/*
- * Get the command at the given index in a pipeline object.
- *
- * Parameters:
- *  pipeline: the pipeline object
- *  index: the index of the command to get
- *
- * Returns:
- *  the command at the given index in the pipeline object
- */
+// Documented in .h file
 char *pipeline_get_command(pipeline_t *pipeline, int index)
 {
     assert(pipeline != NULL);
@@ -307,27 +165,20 @@ char *pipeline_get_command(pipeline_t *pipeline, int index)
 
     // traverse the pipeline until we find the node at the given index
     pipeline_node_t *this_node = pipeline->head;
+
     for (int i = 0; i < index; i++)
-    {
         this_node = this_node->next;
-    }
 
     // return the command at the given index
     return this_node->args[0];
 }
 
-/*
- * Print the contents of a pipeline object to stdout
- *
- * Parameters:
- *  pipeline: the pipeline object to print
- *
- * Returns:
- *  None
- */
+// Documented in .h file
 void pipeline_print(pipeline_t *pipeline)
 {
     assert(pipeline != NULL);
+
+    printf("\nThe Pipeline:\n");
 
     // print the input file
     printf("Input: %s\n", pipeline->input);
@@ -339,13 +190,33 @@ void pipeline_print(pipeline_t *pipeline)
     pipeline_node_t *this_node = pipeline->head;
     while (this_node != NULL)
     {
+        if (this_node->type != TOK_WORD && this_node->type != TOK_QUOTED_WORD)
+        {
+            printf("Command: {null}\n");
+            this_node = this_node->next;
+            continue;
+        }
+
         // print the command
-        printf("Command: %s\n", this_node->args[0]);
+        printf("Command: %s - args: ", this_node->args != NULL ? this_node->args[0] : "NULL");
+
+        // print the arguments
+        int i = 1;
+        while (this_node->args[i] != NULL)
+        {
+            printf("%s ", this_node->args[i]);
+            i++;
+        }
 
         // advance to the next node
         this_node = this_node->next;
+
+        // print a newline
+        printf("\n");
     }
 
     // print the length
     printf("Length: %d\n", pipeline->length);
+
+    printf("End of the pipeline\n\n");
 }

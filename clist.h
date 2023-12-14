@@ -27,8 +27,8 @@ struct _clist
 // struct _clist to be used in the .c as CList
 typedef struct _clist *CList;
 
-// Indicates an error on some functions
-#define INVALID_RETURN ((Token){TOK_END, NULL})
+// Indicates an error on some functions: { TOK_WORD, NULL };
+#define EMPTY_TOKEN (Token){.type = TOK_WORD, .text = NULL}
 
 /*
  * Create a new CList

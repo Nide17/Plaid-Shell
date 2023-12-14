@@ -1,7 +1,7 @@
 /*
  * plaidsh.c
  *
- * A small shell
+ * A small shell that can execute commands with pipes and redirection.
  *
  * Author: Howdy Pierce <howdy@sleepymoose.net>
  * Co-Author: Niyomwungeri Parmenide ISHIMWE <parmenin@andrew.cmu.edu>
@@ -14,59 +14,13 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <assert.h>
+#include <fcntl.h>
 
 #include "clist.h"
 #include "tokenize.h"
 #include "token.h"
 #include "pipeline.h"
 #include "parser.h"
-
-#define MAX_ARGS 20
-
-/*
- * Process an external command, by forking and executing
- * a child process, and waiting for the child to terminate
- *
- * Parameters:
- *   tok_len      The length of the argv vector
- *   argv[]    The argument vector
- *
- * Returns:
- *   The child's exit value, or -1 on error
- */
-static int forkexec_cmd(char *argv[])
-{
-    // start a child process to execute the command
-    pid_t pid = fork();
-
-    // if the child process, execute the command
-    if (pid == 0)
-    {
-        // execute the command if it only exists
-        if (execvp(argv[0], argv) == -1)
-        {
-            printf("%s: Command not found \n", argv[0]);
-            exit(-1);
-        }
-
-        // exit the child process
-        exit(0);
-    }
-
-    // if the parent process, wait for the child to terminate
-    else if (pid > 0)
-    {
-        int status;
-        waitpid(pid, &status, 0);
-        return WEXITSTATUS(status);
-    }
-    else
-    {
-        printf("Error: fork failed \n");
-        fprintf(stderr, "Child %d exited with status %d \n", pid, WEXITSTATUS(pid));
-        return -1;
-    }
-}
 
 /*
  * Executes a pipeline of commands
@@ -76,116 +30,249 @@ static int forkexec_cmd(char *argv[])
  */
 void execute_pipeline(pipeline_t *pipeline)
 {
-    // if the pipeline is empty, return
-    if (pipeline == NULL)
-        return;
+    int num_commands = pipeline->length;
+    int status;
+    pid_t pid;
 
-    // if the pipeline is not empty, execute the commands
-    else
+    int prev_pipe[2];
+    int cur_pipe[2];
+
+    pipeline_node_t *cur_node = pipeline->head;
+
+    // Create the first pipe
+    if (pipe(prev_pipe) == -1)
     {
-        // execute each command in the pipeline
-        for (int i = 0; i < pipeline->length; i++)
+        perror("pipe");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < num_commands; i++)
+    {
+        if (i < num_commands - 1 && pipe(cur_pipe) == -1)
         {
-            // get the command at the given index
-            char *command = pipeline_get_command(pipeline, i);
+            perror("pipe");
+            exit(EXIT_FAILURE);
+        }
 
-            // if the command is exit or quit, exit the shell
-            if (strcmp(command, "exit") == 0 || strcmp(command, "quit") == 0)
-                exit(0);
+        pid = fork();
 
-            // if the command is author, print the author
-            else if (strcmp(command, "author") == 0)
-                printf("Niyomwungeri Parmenide Parmenide\n");
-
-            // if the command is cd, change the directory
-            else if (strcmp(command, "cd") == 0)
+        if (pid == 0)
+        {
+            // Child process
+            if (i != 0)
             {
-                // Go to the directory specified by argv[1]
-                if (chdir(pipeline->head->args[1]) == 0)
-                    printf("Directory changed to %s \n", pipeline->head->args[1]);
-
-                else
-                    fprintf(stderr, "Error: cd command failed \n");
+                dup2(prev_pipe[0], STDIN_FILENO);
+                close(prev_pipe[0]);
+                close(prev_pipe[1]);
             }
 
-            // if the command is pwd, print the current directory
-            else if (strcmp(command, "pwd") == 0)
+            if (i < num_commands - 1)
             {
-                char currentDir[1024];
-                getcwd(currentDir, sizeof(currentDir));
-
-                // print the current directory
-                printf("%s \n", currentDir);
+                dup2(cur_pipe[1], STDOUT_FILENO);
+                close(cur_pipe[0]);
+                close(cur_pipe[1]);
             }
 
-            // if the command is not a built-in command, execute it
-            else
+            if (pipeline_get_output(pipeline) != NULL)
             {
-                // fork and execute the command
-                int status = forkexec_cmd(pipeline->head->args);
+                int fd = open(pipeline_get_output(pipeline), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                if (fd == -1)
+                {
+                    perror(pipeline_get_output(pipeline));
+                    exit(EXIT_FAILURE);
+                }
 
-                // if the command failed, print an error message
-                if (status == -1)
-                    printf("Error: command failed \n");
+                dup2(fd, STDOUT_FILENO);
+                close(fd);
+            }
+
+            if (pipeline_get_input(pipeline) != NULL)
+            {
+                int fd = open(pipeline_get_input(pipeline), O_RDONLY);
+                if (fd == -1)
+                {
+                    perror(pipeline_get_input(pipeline));
+                    exit(EXIT_FAILURE);
+                }
+
+                dup2(fd, STDIN_FILENO);
+                close(fd);
+            }
+
+            if (cur_node->type == TOK_WORD)
+            {
+                 // Built-in commands
+                if (strcmp(cur_node->args[0], "author") == 0)
+                {
+                    printf("Niyomwungeri Parmenide Ishimwe\n");
+                    return;
+                }
+                else if (strcmp(cur_node->args[0], "pwd") == 0)
+                {
+                    char *cwd = getcwd(NULL, 0);
+                    printf("%s\n", cwd);
+                    free(cwd);
+                    return;
+                }
+                else if (strcmp(cur_node->args[0], "cd") == 0)
+                {
+                    if (cur_node->args[1] != NULL)
+                    {
+                        if (chdir(cur_node->args[1]) != 0)
+                            perror("chdir");
+                    }
+                    else
+                        chdir(getenv("HOME"));
+                    return;
+                }
+
+                // Execute the command if it is not a built-in command, pipe or redirection
+                else if (execvp(cur_node->args[0], cur_node->args) == -1)
+                {
+                    printf("%s: Command not found \n", cur_node->args[0]);
+                    fprintf(stderr, "Child %d exited with status %d \n", pid, 2);
+                    exit(EXIT_FAILURE);
+                }
+            }
+
+            // Close file descriptors for redirection
+            if (pipeline_get_output(pipeline) != NULL)
+                close(STDOUT_FILENO);
+
+            if (pipeline_get_input(pipeline) != NULL)
+                close(STDIN_FILENO);
+        }
+        else if (pid > 0)
+        {
+            // Parent process
+            if (i != 0)
+            {
+                close(prev_pipe[0]);
+                close(prev_pipe[1]);
+            }
+
+            if (i < num_commands - 1)
+            {
+                prev_pipe[0] = cur_pipe[0];
+                prev_pipe[1] = cur_pipe[1];
             }
         }
+        else
+        {
+            perror("fork");
+            exit(EXIT_FAILURE);
+        }
+
+        cur_node = cur_node->next;
+    }
+
+    // Close the last pipe in the parent process
+    if (pid > 0 && num_commands > 1)
+    {
+        close(prev_pipe[0]);
+        close(prev_pipe[1]);
+    }
+
+    // Wait for all the child processes to finish
+    // Wait for all the child processes to finish
+    for (int i = 0; i < num_commands; i++)
+    {
+        pid_t terminated_pid = waitpid(-1, &status, 0);
+        if (terminated_pid == -1)
+        {
+            // perror("waitpid");
+            exit(EXIT_FAILURE);
+        }
+        if (WIFEXITED(status))
+        {
+            // printf("Child process %d exited with status %d\n", terminated_pid, WEXITSTATUS(status));
+        }
+        else if (WIFSIGNALED(status))
+        {
+            // printf("Child process %d terminated by signal %d\n", terminated_pid, WTERMSIG(status));
+        }
+    }
+    // printf("All child processes finished\n");
+
+    // Close the last pipe output
+    if (num_commands > 1)
+    {
+        close(prev_pipe[0]);
+        close(prev_pipe[1]);
     }
 }
 
-int main(int tok_len, char *argv[])
+int main()
 {
-    char *input = NULL;
-    CList tokens = NULL;         // list of tokens
-    pipeline_t *pipeline = NULL; // pipeline of commands
+    char *user_input = NULL;
+    CList tokens = NULL;
+    pipeline_t *pipeline = NULL;
     char errmsg[100];
 
     fprintf(stdout, "Welcome to Plaid Shell!\n");
-    const char *prompt = "#? ";
+    const char *terminal = "#? ";
 
-    // main loop of the shell - read, parse, execute commands
     while (1)
     {
-        // get the input from the user
-        input = readline(prompt);
+        user_input = readline(terminal);
 
-        // store the input in the history buffer
-        add_history(input);
+        // if the user entered nothing or spaces, loop again
+        while (user_input != NULL && *user_input != '\0' && isspace(*user_input))
+            user_input++;
 
-        if(!input || *input == '\0')
-        {
-            free(input);
+        if (user_input == NULL || *user_input == '\0')
             continue;
-        }
 
-        // tokenize the input into arguments
-        tokens = TOK_tokenize_input(input, errmsg, sizeof(errmsg));
+        add_history(user_input);
 
-        // if the input was empty, go back to the prompt
-        if (CL_length(tokens) == 0)
+        tokens = TOK_tokenize_input(user_input, errmsg, sizeof(errmsg));
+
+        if (strlen(errmsg) > 0)
         {
-            free(input);
+            printf("%s\n", errmsg);
             CL_free(tokens);
+            free(user_input);
+            continue;
+        }
+        
+        if (tokens->length == 0)
+        {
+            CL_free(tokens);
+            // free(user_input);
             continue;
         }
 
-        // if the input was not empty, execute the command
-        else
-        {
-            // add the tokens to the pipeline
-            pipeline = parse_tokens(tokens);
+        pipeline = parse_tokens(tokens, errmsg, sizeof(errmsg));
 
-            // execute the pipeline
-            execute_pipeline(pipeline);
+        if (pipeline == NULL)
+        {
+            printf("%s\n", errmsg);
+            CL_free(tokens);
+            free(user_input);
+            continue;
         }
 
-        // free the input
-        free(input);
+        if (strcmp(pipeline->head->args[0], "exit") == 0 || strcmp(pipeline->head->args[0], "quit") == 0)
+        {
+            CL_free(tokens);
+            pipeline_free(pipeline);
+            free(user_input);
+            break;
+        }
 
-        // free the tokens
+        if (strlen(errmsg) > 0)
+        {
+            printf("%s\n", errmsg);
+            CL_free(tokens);
+            pipeline_free(pipeline);
+            free(user_input);
+            continue;
+        }
+
+        execute_pipeline(pipeline);
         CL_free(tokens);
-
-        // free the pipeline
         pipeline_free(pipeline);
+        free(user_input);
     }
 
     return 0;
