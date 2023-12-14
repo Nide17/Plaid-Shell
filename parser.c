@@ -39,7 +39,6 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
             // if the current pipeline node is NULL, create a new one
             if (node == NULL)
             {
-                // printf("new node\n");
                 node = pipeline_cmd_new(tok.type);
 
                 // add the token to the new node

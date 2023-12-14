@@ -122,34 +122,34 @@ void run_test_cases()
     assert(strcmp(pipeline_get_command(pipeline, 2)->args[0], "wc") == 0);
     assert(pipeline_get_command(pipeline, 3)->type == TOK_PIPE);
 
-    // pipeline_cmd_t *cat_node3 = pipeline_cmd_new(TOK_WORD);
-    // pipeline_cmd_add_arg(cat_node3, "cat");
-    // pipeline_add_command(pipeline, cat_node3);
+    pipeline_cmd_t *cat_node3 = pipeline_cmd_new(TOK_WORD);
+    pipeline_cmd_add_arg(cat_node3, "cat");
+    pipeline_add_command(pipeline, cat_node3);
 
-    // pipeline_cmd_t *grep_node3 = pipeline_cmd_new(TOK_WORD);
-    // pipeline_cmd_add_arg(grep_node3, "grep");
-    // pipeline_cmd_add_arg(grep_node3, "hello");
-    // pipeline_add_command(pipeline, grep_node3);
+    pipeline_cmd_t *grep_node3 = pipeline_cmd_new(TOK_WORD);
+    pipeline_cmd_add_arg(grep_node3, "grep");
+    pipeline_cmd_add_arg(grep_node3, "hello");
+    pipeline_add_command(pipeline, grep_node3);
 
-    // pipeline_cmd_t *wc_node3 = pipeline_cmd_new(TOK_WORD);
-    // pipeline_cmd_add_arg(wc_node3, "wc");
-    // pipeline_add_command(pipeline, wc_node3);
+    pipeline_cmd_t *wc_node3 = pipeline_cmd_new(TOK_WORD);
+    pipeline_cmd_add_arg(wc_node3, "wc");
+    pipeline_add_command(pipeline, wc_node3);
 
-    // pipeline_cmd_t *redir_node = pipeline_cmd_new(TOK_GREATERTHAN);
-    // pipeline_add_command(pipeline, redir_node);
+    pipeline_cmd_t *redir_node = pipeline_cmd_new(TOK_GREATERTHAN);
+    pipeline_add_command(pipeline, redir_node);
 
-    // pipeline_cmd_t *cat_node4 = pipeline_cmd_new(TOK_WORD);
-    // pipeline_cmd_add_arg(cat_node4, "cat");
-    // pipeline_add_command(pipeline, cat_node4);
+    pipeline_cmd_t *cat_node4 = pipeline_cmd_new(TOK_WORD);
+    pipeline_cmd_add_arg(cat_node4, "cat");
+    pipeline_add_command(pipeline, cat_node4);
 
-    // pipeline_cmd_t *grep_node4 = pipeline_cmd_new(TOK_WORD);
-    // pipeline_cmd_add_arg(grep_node4, "grep");
-    // pipeline_cmd_add_arg(grep_node4, "hello");
-    // pipeline_add_command(pipeline, grep_node4);
+    pipeline_cmd_t *grep_node4 = pipeline_cmd_new(TOK_WORD);
+    pipeline_cmd_add_arg(grep_node4, "grep");
+    pipeline_cmd_add_arg(grep_node4, "hello");
+    pipeline_add_command(pipeline, grep_node4);
 
-    // pipeline_cmd_t *wc_node4 = pipeline_cmd_new(TOK_WORD);
-    // pipeline_cmd_add_arg(wc_node4, "wc");
-    // pipeline_add_command(pipeline, wc_node4);
+    pipeline_cmd_t *wc_node4 = pipeline_cmd_new(TOK_WORD);
+    pipeline_cmd_add_arg(wc_node4, "wc");
+    pipeline_add_command(pipeline, wc_node4);
 
     // Free Pipeline
     pipeline_free(pipeline);

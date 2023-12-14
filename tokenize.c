@@ -81,7 +81,7 @@ CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
                     {
                         if (*(end_quoted + 1) != 'n' && *(end_quoted + 1) != 'r' && *(end_quoted + 1) != 't' && *(end_quoted + 1) != '"' && *(end_quoted + 1) != '\\' && *(end_quoted + 1) != ' ' && *(end_quoted + 1) != '|' && *(end_quoted + 1) != '<' && *(end_quoted + 1) != '>')
                         {
-                            snprintf(errmsg, errmsg_sz, "Illegal escape character '?%c", *(end_quoted + 1));
+                            snprintf(errmsg, errmsg_sz, "Illegal escape character '%c", *(end_quoted + 1));
                             CL_free(tokens);
                             free(quoted_word);
                             return NULL;
@@ -101,6 +101,7 @@ CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
                 }
 
                 // Else, we found the closing quote, so copy the quoted word into a new string
+                snprintf(quoted_word, end_quoted - user_input, "%s", user_input + 1);
                 if (quoted_word == NULL)
                 {
                     snprintf(errmsg, errmsg_sz, "Unable to allocate memory for quoted word");
@@ -108,13 +109,18 @@ CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
                     return NULL;
                 }
 
-                // Add the token to the list
-                printf("Quoted word: %s\n", quoted_word);
-                Token tok = {TOK_QUOTED_WORD, quoted_word};
-
+                // add the token to the list
+                // array to hold quoted word that is going to be freed
+                char *w = malloc(strlen(quoted_word) + 1);
+                strcpy(w, quoted_word);
+                Token tok = {TOK_QUOTED_WORD, w};
                 CL_append(tokens, (Token)tok);
 
-                // move past the closing quote
+                // deallocate the memory
+                free(quoted_word);
+                quoted_word = NULL;
+
+                // move the pointer to the next character after the closing quote
                 user_input = end_quoted + 1;
             }
 
@@ -166,7 +172,7 @@ CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
                             break;
 
                         default:
-                            snprintf(errmsg, errmsg_sz, "Illegal escape character '?%c", *(user_input + 1));
+                            snprintf(errmsg, errmsg_sz, "Illegal escape character '%c", *(user_input + 1));
                             free(word);
                             CL_free(tokens);
                             return NULL;

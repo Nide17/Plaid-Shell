@@ -28,9 +28,9 @@
  *   pipeline   The pipeline to execute
  *
  * Returns:
- *  None
+ *   The exit status of the last command in the pipeline
  */
-void execute_pipeline(pipeline_t *pipeline)
+int execute_pipeline(pipeline_t *pipeline)
 {
     int num_commands = pipeline->length;
     int status;
@@ -45,7 +45,7 @@ void execute_pipeline(pipeline_t *pipeline)
     if (pipe(prev_pipe) == -1)
     {
         perror("pipe");
-        exit(EXIT_FAILURE);
+        exit(1);
     }
 
     // Execute each command in the pipeline
@@ -54,7 +54,7 @@ void execute_pipeline(pipeline_t *pipeline)
         if (i < num_commands - 1 && pipe(cur_pipe) == -1)
         {
             perror("pipe");
-            exit(EXIT_FAILURE);
+            exit(1);
         }
 
         pid = fork();
@@ -76,29 +76,29 @@ void execute_pipeline(pipeline_t *pipeline)
                 close(cur_pipe[1]);
             }
 
-            if (pipeline_get_output(pipeline) != NULL)
-            {
-                int fd = open(pipeline_get_output(pipeline), O_WRONLY | O_CREAT | O_TRUNC, 0666);
-                if (fd == -1)
-                {
-                    perror(pipeline_get_output(pipeline));
-                    exit(EXIT_FAILURE);
-                }
-
-                dup2(fd, STDOUT_FILENO);
-                close(fd);
-            }
-
             if (pipeline_get_input(pipeline) != NULL)
             {
                 int fd = open(pipeline_get_input(pipeline), O_RDONLY);
                 if (fd == -1)
                 {
                     perror(pipeline_get_input(pipeline));
-                    exit(EXIT_FAILURE);
+                    exit(1);
                 }
 
                 dup2(fd, STDIN_FILENO);
+                close(fd);
+            }
+
+            if (pipeline_get_output(pipeline) != NULL)
+            {
+                int fd = open(pipeline_get_output(pipeline), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+                if (fd == -1)
+                {
+                    perror(pipeline_get_output(pipeline));
+                    exit(1);
+                }
+
+                dup2(fd, STDOUT_FILENO);
                 close(fd);
             }
 
@@ -107,34 +107,80 @@ void execute_pipeline(pipeline_t *pipeline)
                 // Built-in commands
                 if (strcmp(cur_node->args[0], "author") == 0)
                 {
-                    printf("Niyomwungeri Parmenide Ishimwe\n");
-                    return;
+                    int pipefd[2];
+                    if (pipe(pipefd) == -1)
+                    {
+                        perror("pipe");
+                        exit(1);
+                    }
+
+                    pid_t next_command_pid;
+
+                    // Fork a new process for the next command after author
+                    next_command_pid = fork();
+
+                    if (next_command_pid == 0)
+                    {
+                        // Child process
+                        close(pipefd[0]);
+                        dup2(pipefd[1], STDOUT_FILENO);
+                        close(pipefd[1]);
+                    }
+                    else if (next_command_pid > 0)
+                    {
+                        // Parent process
+                        close(pipefd[1]);
+                        dup2(pipefd[0], STDIN_FILENO);
+                        close(pipefd[0]);
+
+                        // Execute the author command
+                        printf("Niyomwungeri Parmenide ISHIMWE\n");
+
+                        exit (0);
+                    }
+                    else
+                    {
+                        perror("fork");
+                        exit(1);
+                    }
+
+                    // Wait for the next command to finish
+                    pid_t terminated_pid = waitpid(next_command_pid, &status, 0);
+
+                    if (terminated_pid == -1)
+                        exit(1);
+
+                    return status;
                 }
                 else if (strcmp(cur_node->args[0], "pwd") == 0)
                 {
                     char *cwd = getcwd(NULL, 0);
                     printf("%s\n", cwd);
                     free(cwd);
-                    return;
+                    return 0;
                 }
                 else if (strcmp(cur_node->args[0], "cd") == 0)
                 {
                     if (cur_node->args[1] != NULL)
                     {
                         if (chdir(cur_node->args[1]) != 0)
+                        {
                             perror("chdir");
+                            exit(1);
+                        }
                     }
                     else
                         chdir(getenv("HOME"));
-                    return;
+                    return 0;
                 }
 
                 // Execute the command if it is not a built-in command, pipe or redirection
                 else if (execvp(cur_node->args[0], cur_node->args) == -1)
                 {
                     printf("%s: Command not found \n", cur_node->args[0]);
+                    perror(cur_node->args[0]);
                     fprintf(stderr, "Child %d exited with status %d \n", pid, 2);
-                    exit(EXIT_FAILURE);
+                    exit(1);
                 }
             }
 
@@ -163,7 +209,7 @@ void execute_pipeline(pipeline_t *pipeline)
         else
         {
             perror("fork");
-            exit(EXIT_FAILURE);
+            exit(1);
         }
 
         // Advance to the next node
@@ -183,7 +229,7 @@ void execute_pipeline(pipeline_t *pipeline)
         pid_t terminated_pid = waitpid(-1, &status, 0);
 
         if (terminated_pid == -1)
-            exit(EXIT_FAILURE);
+            exit(1);
     }
 
     // Close the last pipe output
@@ -192,14 +238,16 @@ void execute_pipeline(pipeline_t *pipeline)
         close(prev_pipe[0]);
         close(prev_pipe[1]);
     }
+
+    return status;
 }
 
 int main()
 {
-    char *user_input = NULL;
     CList tokens = NULL;
     pipeline_t *pipeline = NULL;
     char errmsg[100];
+    char *user_input = NULL;
 
     fprintf(stdout, "Welcome to Plaid Shell!\n");
     const char *terminal = "#? ";
@@ -239,6 +287,7 @@ int main()
             continue;
         }
 
+        // build the pipeline from the list of tokens
         pipeline = parse_tokens(tokens, errmsg, sizeof(errmsg));
 
         if (pipeline == NULL)
@@ -254,7 +303,7 @@ int main()
             CL_free(tokens);
             pipeline_free(pipeline);
             free(user_input);
-            break;
+            exit(0);
         }
 
         if (strlen(errmsg) > 0)
@@ -272,5 +321,5 @@ int main()
         user_input = NULL;
     }
 
-    return 0;
+    exit(0);
 }
