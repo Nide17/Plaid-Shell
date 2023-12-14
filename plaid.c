@@ -1,15 +1,14 @@
 /*
- * plaidsh.c
+ * plaid.c
  *
  * A small shell that can execute commands with pipes and redirection.
  *
- * Author: Howdy Pierce <howdy@sleepymoose.net>
- * Co-Author: Niyomwungeri Parmenide ISHIMWE <parmenin@andrew.cmu.edu>
+ * Author: Niyomwungeri Parmenide ISHIMWE <parmenin@andrew.cmu.edu>
  */
-#include <stdio.h>
-#include <stdlib.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdbool.h>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -27,6 +26,9 @@
  *
  * Parameters:
  *   pipeline   The pipeline to execute
+ *
+ * Returns:
+ *  None
  */
 void execute_pipeline(pipeline_t *pipeline)
 {
@@ -46,6 +48,7 @@ void execute_pipeline(pipeline_t *pipeline)
         exit(EXIT_FAILURE);
     }
 
+    // Execute each command in the pipeline
     for (int i = 0; i < num_commands; i++)
     {
         if (i < num_commands - 1 && pipe(cur_pipe) == -1)
@@ -163,6 +166,7 @@ void execute_pipeline(pipeline_t *pipeline)
             exit(EXIT_FAILURE);
         }
 
+        // Advance to the next node
         cur_node = cur_node->next;
     }
 
@@ -177,21 +181,10 @@ void execute_pipeline(pipeline_t *pipeline)
     for (int i = 0; i < num_commands; i++)
     {
         pid_t terminated_pid = waitpid(-1, &status, 0);
+
         if (terminated_pid == -1)
-        {
-            // perror("waitpid");
             exit(EXIT_FAILURE);
-        }
-        if (WIFEXITED(status))
-        {
-            // printf("Child process %d exited with status %d\n", terminated_pid, WEXITSTATUS(status));
-        }
-        else if (WIFSIGNALED(status))
-        {
-            // printf("Child process %d terminated by signal %d\n", terminated_pid, WTERMSIG(status));
-        }
     }
-    // printf("All child processes finished\n");
 
     // Close the last pipe output
     if (num_commands > 1)
@@ -213,6 +206,7 @@ int main()
 
     while (1)
     {
+        // read the user input
         user_input = readline(terminal);
 
         // if the user entered nothing or spaces, loop again
@@ -222,22 +216,26 @@ int main()
         if (user_input == NULL || *user_input == '\0')
             continue;
 
+        // store history of commands
         add_history(user_input);
 
+        // tokenize the user input
         tokens = TOK_tokenize_input(user_input, errmsg, sizeof(errmsg));
 
+        // check for errors while tokenizing
         if (strlen(errmsg) > 0)
         {
             printf("%s\n", errmsg);
             CL_free(tokens);
-            free(user_input);
+            user_input = NULL;
             continue;
         }
 
+        // if there are no tokens, loop again
         if (tokens->length == 0)
         {
             CL_free(tokens);
-            // free(user_input);
+            user_input = NULL;
             continue;
         }
 
@@ -247,7 +245,7 @@ int main()
         {
             printf("%s\n", errmsg);
             CL_free(tokens);
-            free(user_input);
+            user_input = NULL;
             continue;
         }
 
@@ -264,14 +262,14 @@ int main()
             printf("%s\n", errmsg);
             CL_free(tokens);
             pipeline_free(pipeline);
-            free(user_input);
+            user_input = NULL;
             continue;
         }
 
         execute_pipeline(pipeline);
         CL_free(tokens);
         pipeline_free(pipeline);
-        free(user_input);
+        user_input = NULL;
     }
 
     return 0;

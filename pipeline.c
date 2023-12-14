@@ -67,20 +67,19 @@ void pipeline_free(pipeline_t *pipeline)
     if (!pipeline)
         return;
 
-    // free all the nodes in the pipeline
-    pipeline_cmd_t *this_node = pipeline->head;
+    pipeline_cmd_t *curr_node = pipeline->head;
 
     // traverse the pipeline, freeing each node
-    while (this_node != NULL)
+    while (curr_node != NULL)
     {
         // save a pointer to the next node
-        pipeline_cmd_t *next_node = this_node->next;
+        pipeline_cmd_t *next_node = curr_node->next;
 
         // free the current node
-        pipeline_node_free(this_node);
+        pipeline_node_free(curr_node);
 
         // move on to the next node
-        this_node = next_node;
+        curr_node = next_node;
     }
 
     // free the pipeline object

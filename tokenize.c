@@ -3,9 +3,9 @@
  *
  * Functions to tokenize and manipulate lists of tokens
  *
- * Author: Howdy Pierce <howdy@sleepymoose.net>
- * Contributor: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
+ * Author: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,102 +33,101 @@ const char *TT_to_str(TokenType tt)
 }
 
 // Documented in .h file
-CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
+CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
 {
-    CList tokens = CL_new();
     // clear the error message
     errmsg[0] = '\0';
+    CList tokens = CL_new();
 
-    while (input != NULL && *input != '\0')
+    while (user_input != NULL && *user_input != '\0')
     {
-        if (isspace(*input))
-            input++;
+        // Skip any leading spaces
+        if (isspace(*user_input))
+            user_input++;
 
-        else if (*input)
+        else if (*user_input)
         {
-            if (*input == '"')
+            if (*user_input == '<')
             {
-                const char *quotedEnd = input + 1;
-                while (*quotedEnd != '"')
+                Token tok = {TOK_LESSTHAN, NULL};
+                CL_append(tokens, (Token)tok);
+                user_input++;
+            }
+
+            else if (*user_input == '>')
+            {
+                Token tok = {TOK_GREATERTHAN, NULL};
+                CL_append(tokens, (Token)tok);
+                user_input++;
+            }
+
+            else if (*user_input == '|')
+            {
+                Token tok = {TOK_PIPE, NULL};
+                CL_append(tokens, (Token)tok);
+                user_input++;
+            }
+
+            // Check for a quoted word
+            else if (*user_input == '"')
+            {
+                char *quoted_word = malloc(strlen(user_input) - 1);
+                const char *end_quoted = user_input + 1;
+
+                while (*end_quoted != '"')
                 {
                     // Check for illegal escape characters
-                    if (*quotedEnd == '\\')
+                    if (*end_quoted == '\\')
                     {
-                        switch (*(quotedEnd + 1))
+                        if (*(end_quoted + 1) != 'n' && *(end_quoted + 1) != 'r' && *(end_quoted + 1) != 't' && *(end_quoted + 1) != '"' && *(end_quoted + 1) != '\\' && *(end_quoted + 1) != ' ' && *(end_quoted + 1) != '|' && *(end_quoted + 1) != '<' && *(end_quoted + 1) != '>')
                         {
-                        case 'n':
-                        case 'r':
-                        case 't':
-                        case '"':
-                        case '\\':
-                        case ' ':
-                        case '|':
-                        case '<':
-                        case '>':
-                            break;
-
-                        default:
-                            snprintf(errmsg, errmsg_sz, "Illegal escape character '?%c", *(quotedEnd + 1));
+                            snprintf(errmsg, errmsg_sz, "Illegal escape character '?%c", *(end_quoted + 1));
                             CL_free(tokens);
+                            free(quoted_word);
                             return NULL;
                         }
                     }
 
-                    quotedEnd++;
-                    if (*quotedEnd == '\0')
+                    end_quoted++;
+
+                    // if we reach the end of the string without finding the closing quote, return an error
+                    if (*end_quoted == '\0')
                     {
                         snprintf(errmsg, errmsg_sz, "Unterminated quote");
+                        free(quoted_word);
                         CL_free(tokens);
                         return NULL;
                     }
                 }
 
-                // Allocate a new token
-                char *quotedWord = malloc(strlen(input) - 1);
-
-                if (quotedWord == NULL)
+                // Else, we found the closing quote, so copy the quoted word into a new string
+                if (quoted_word == NULL)
                 {
                     snprintf(errmsg, errmsg_sz, "Unable to allocate memory for quoted word");
                     CL_free(tokens);
                     return NULL;
                 }
+
                 // Add the token to the list
-                Token tok = {TOK_QUOTED_WORD, quotedWord};
+                printf("Quoted word: %s\n", quoted_word);
+                Token tok = {TOK_QUOTED_WORD, quoted_word};
 
                 CL_append(tokens, (Token)tok);
-                input = quotedEnd + 1;
+
+                // move past the closing quote
+                user_input = end_quoted + 1;
             }
 
-            else if (*input == '<')
-            {
-                Token tok = {TOK_LESSTHAN, NULL};
-                CL_append(tokens, (Token)tok);
-                input++;
-            }
-
-            else if (*input == '>')
-            {
-                Token tok = {TOK_GREATERTHAN, NULL};
-                CL_append(tokens, (Token)tok);
-                input++;
-            }
-
-            else if (*input == '|')
-            {
-                Token tok = {TOK_PIPE, NULL};
-                CL_append(tokens, (Token)tok);
-                input++;
-            }
-
+            // Check for a word
             else
             {
-                char *word = malloc(strlen(input) + 1);
+                char *word = malloc(strlen(user_input) + 1);
                 int i = 0;
-                while (*input != '\0' && !isspace(*input) && *input != '<' && *input != '>' && *input != '|' && *input != '"')
+                while (*user_input != '\0' && !isspace(*user_input) && *user_input != '<' && *user_input != '>' && *user_input != '|' && *user_input != '"')
                 {
-                    if (*input == '\\')
+                    if (*user_input == '\\')
                     {
-                        switch (*(input + 1))
+                        switch (*(user_input + 1))
                         {
                         case 'n':
                             word[i++] = '\n';
@@ -167,16 +166,16 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                             break;
 
                         default:
-                            snprintf(errmsg, errmsg_sz, "Illegal escape character '?%c", *(input + 1));
+                            snprintf(errmsg, errmsg_sz, "Illegal escape character '?%c", *(user_input + 1));
                             free(word);
                             CL_free(tokens);
                             return NULL;
                         }
-                        input += 2;
+                        user_input += 2;
                     }
                     else
                     {
-                        word[i++] = *input++;
+                        word[i++] = *user_input++;
                     }
                 }
                 word[i] = '\0';
@@ -216,14 +215,8 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                         strcpy(w, globbuf.gl_pathv[i]);
                         Token tok = {TOK_WORD, w};
                         CL_append(tokens, (Token)tok);
-
                         w = NULL;
                     }
-
-                    globfree(&globbuf);
-
-                    // deallocate the memory
-                    free(word);
                 }
                 else
                 {
@@ -235,10 +228,10 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
                     CL_append(tokens, (Token)tok);
 
                     // deallocate the memory
-                    free(word);
-                    free(w);
+                    w = NULL;
                 }
 
+                free(word);
                 globfree(&globbuf);
             }
         }

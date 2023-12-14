@@ -3,14 +3,14 @@
  *
  * Functions to tokenize, and manipulate lists of tokens
  *
- * Author: Howdy Pierce <howdy@sleepymoose.net>
- * Contributor: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
+ * Author: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
  */
 
 #ifndef _TOKENIZE_H_
 #define _TOKENIZE_H_
 
 #include <glob.h>
+
 #include "clist.h"
 #include "token.h"
 
