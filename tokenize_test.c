@@ -26,7 +26,7 @@
         }                                                                \
     }
 
-Token tokens[] = {{TOK_WORD, "ls"}, {TOK_WORD, "-l"}, {TOK_WORD, "-a"}, {TOK_WORD, "foo"}, {TOK_WORD, "bar"}, {TOK_WORD, "baz"}, {TOK_WORD, "qux"}, {TOK_QUOTED_WORD, "foo bar baz"}, {TOK_LESSTHAN, "<"}, {TOK_WORD, "input.txt"}, {TOK_GREATERTHAN, ">"}, {TOK_WORD, "output.txt"}, {TOK_PIPE, "|"}, {TOK_WORD, "wc"}, {TOK_WORD, "-l"}, {TOK_WORD, NULL}};
+Token tokens[] = {{TOK_WORD, "ls"}, {TOK_WORD, "-l"}, {TOK_WORD, "-a"}, {TOK_WORD, "foo"}, {TOK_WORD, "bar"}, {TOK_WORD, "baz"}, {TOK_WORD, "qux"}, {TOK_QUOTED_WORD, "foo bar baz"}, {TOK_LESSTHAN, "<"}, {TOK_WORD, "input.txt"}, {TOK_GREATERTHAN, ">"}, {TOK_WORD, "output.txt"}, {TOK_PIPE, "|"}, {TOK_WORD, "wc"}, {TOK_WORD, "-l"}};
 
 const int num_tokens = sizeof(tokens) / sizeof(tokens[0]);
 

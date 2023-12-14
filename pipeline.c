@@ -1,7 +1,7 @@
 /*
  * pipeline.c
  *
-* Functions to create and manipulate a pipeline object.
+ * Functions to create and manipulate a pipeline object.
  *
  * Author: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
  */
@@ -14,10 +14,10 @@
 #include "pipeline.h"
 
 // Documented in .h file
-pipeline_node_t *pipeline_node_new(TokenType type)
+pipeline_cmd_t *pipeline_cmd_new(TokenType type)
 {
     // allocate a new pipeline node
-    pipeline_node_t *node = (pipeline_node_t *)malloc(sizeof(pipeline_node_t));
+    pipeline_cmd_t *node = (pipeline_cmd_t *)malloc(sizeof(pipeline_cmd_t));
     assert(node != NULL);
 
     // initialize the pipeline node
@@ -36,7 +36,7 @@ pipeline_node_t *pipeline_node_new(TokenType type)
 }
 
 // Documented in .h file
-void pipeline_node_free(pipeline_node_t *node)
+void pipeline_node_free(pipeline_cmd_t *node)
 {
     assert(node != NULL);
 
@@ -68,13 +68,13 @@ void pipeline_free(pipeline_t *pipeline)
         return;
 
     // free all the nodes in the pipeline
-    pipeline_node_t *this_node = pipeline->head;
+    pipeline_cmd_t *this_node = pipeline->head;
 
     // traverse the pipeline, freeing each node
     while (this_node != NULL)
     {
         // save a pointer to the next node
-        pipeline_node_t *next_node = this_node->next;
+        pipeline_cmd_t *next_node = this_node->next;
 
         // free the current node
         pipeline_node_free(this_node);
@@ -116,7 +116,7 @@ char *pipeline_get_output(pipeline_t *pipeline)
 }
 
 // Documented in .h file
-void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node)
+void pipeline_add_command(pipeline_t *pipeline, pipeline_cmd_t *node)
 {
     assert(pipeline != NULL);
     assert(node != NULL);
@@ -124,11 +124,11 @@ void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node)
     // add the node to the pipeline: this is the first node in the pipeline
     if (pipeline->head == NULL)
         pipeline->head = node;
-        
+
     else
     {
         // find the last node in the pipeline
-        pipeline_node_t *this_node = pipeline->head;
+        pipeline_cmd_t *this_node = pipeline->head;
 
         while (this_node->next != NULL)
             this_node = this_node->next;
@@ -142,7 +142,7 @@ void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node)
 }
 
 // Documented in .h file
-void pipeline_node_add_arg(pipeline_node_t *node, char *arg)
+void pipeline_cmd_add_arg(pipeline_cmd_t *node, char *arg)
 {
     assert(node != NULL);
     if (node->type == TOK_WORD || node->type == TOK_QUOTED_WORD)
@@ -158,19 +158,19 @@ void pipeline_node_add_arg(pipeline_node_t *node, char *arg)
 }
 
 // Documented in .h file
-char *pipeline_get_command(pipeline_t *pipeline, int index)
+pipeline_cmd_t *pipeline_get_command(pipeline_t *pipeline, int index)
 {
     assert(pipeline != NULL);
     assert(index >= 0 && index < pipeline->length);
 
     // traverse the pipeline until we find the node at the given index
-    pipeline_node_t *this_node = pipeline->head;
+    pipeline_cmd_t *this_node = pipeline->head;
 
     for (int i = 0; i < index; i++)
         this_node = this_node->next;
 
-    // return the command at the given index
-    return this_node->args[0];
+    // return the command node at the given index
+    return this_node;
 }
 
 // Documented in .h file
@@ -187,7 +187,7 @@ void pipeline_print(pipeline_t *pipeline)
     printf("Output: %s\n", pipeline->output);
 
     // print the commands
-    pipeline_node_t *this_node = pipeline->head;
+    pipeline_cmd_t *this_node = pipeline->head;
     while (this_node != NULL)
     {
         if (this_node->type != TOK_WORD && this_node->type != TOK_QUOTED_WORD)

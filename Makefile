@@ -1,6 +1,3 @@
-
-# Create a Makefile;
-# be certain to set the following flags to gcc : -Wall - Werror - g - fsanitize = address
 CFLAGS=-Wall -Werror -g -fsanitize=address
 TARGETS=plaid tokenize_test pipeline_test parser_test
 OBJS=clist.o tokenize.o pipeline.o parser.o

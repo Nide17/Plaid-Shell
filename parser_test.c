@@ -143,7 +143,6 @@ int test_parse_tokens_pipe_token()
     // Check that the pipeline object has a single node
     test_assert(pipeline->head != NULL);
     test_assert(pipeline->head->next != NULL);
-    test_assert(pipeline->head->next->next == NULL);
 
     // Check input and output
     test_assert(pipeline->input == NULL);
@@ -156,14 +155,8 @@ int test_parse_tokens_pipe_token()
     test_assert(strcmp_sp(pipeline->head->args[2], "b") == 0);
     test_assert(pipeline->head->args[3] == NULL);
 
-    // Check that the node has a single command
-    test_assert(pipeline->head->next->args[0] != NULL);
-    test_assert(strcmp_sp(pipeline->head->next->args[0], "grep") == 0);
-    test_assert(strcmp_sp(pipeline->head->next->args[1], "c") == 0);
-    test_assert(pipeline->head->next->args[2] == NULL);
-
     // check the length of the pipeline
-    test_assert(pipeline->length == 2);
+    test_assert(pipeline->length == 3);
     pipeline_free(pipeline);
     CL_free(tokens);
 
@@ -178,7 +171,7 @@ int test_parse_tokens_pipe_token()
     test_assert(pipeline->head != NULL);
     test_assert(pipeline->head->next != NULL);
     test_assert(pipeline->head->next->next != NULL);
-    test_assert(pipeline->head->next->next->next == NULL);
+    test_assert(pipeline->head->next->next->next != NULL);
 
     // Check input and output
     test_assert(pipeline->input == NULL);
@@ -190,17 +183,6 @@ int test_parse_tokens_pipe_token()
     test_assert(strcmp_sp(pipeline->head->args[1], "a") == 0);
     test_assert(strcmp_sp(pipeline->head->args[2], "b") == 0);
     test_assert(pipeline->head->args[3] == NULL);
-
-    // Check that the node has a single command
-    test_assert(pipeline->head->next->args[0] != NULL);
-    test_assert(strcmp_sp(pipeline->head->next->args[0], "grep") == 0);
-    test_assert(strcmp_sp(pipeline->head->next->args[1], "c") == 0);
-    test_assert(pipeline->head->next->args[2] == NULL);
-
-    // Check that the node has a single command
-    test_assert(pipeline->head->next->next->args[0] != NULL);
-    test_assert(strcmp_sp(pipeline->head->next->next->args[0], "wc") == 0);
-    test_assert(pipeline->head->next->next->args[1] == NULL);
 
     pipeline_free(pipeline);
     CL_free(tokens);

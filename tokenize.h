@@ -94,5 +94,4 @@ void print_element(int pos, Token tok, void *cb_data);
  */
 void TOK_print(CList tokens);
 
-
 #endif /* _TOKENIZE_H_ */

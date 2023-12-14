@@ -85,13 +85,17 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
 
                 // Allocate a new token
                 char *quotedWord = malloc(strlen(input) - 1);
-                snprintf(quotedWord, quotedEnd - input, "%s", input + 1);
 
+                if (quotedWord == NULL)
+                {
+                    snprintf(errmsg, errmsg_sz, "Unable to allocate memory for quoted word");
+                    CL_free(tokens);
+                    return NULL;
+                }
                 // Add the token to the list
                 Token tok = {TOK_QUOTED_WORD, quotedWord};
 
                 CL_append(tokens, (Token)tok);
-                free(quotedWord);
                 input = quotedEnd + 1;
             }
 
@@ -215,7 +219,7 @@ CList TOK_tokenize_input(const char *input, char *errmsg, size_t errmsg_sz)
 
                         w = NULL;
                     }
-                    
+
                     globfree(&globbuf);
 
                     // deallocate the memory

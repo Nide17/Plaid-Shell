@@ -37,7 +37,7 @@ void execute_pipeline(pipeline_t *pipeline)
     int prev_pipe[2];
     int cur_pipe[2];
 
-    pipeline_node_t *cur_node = pipeline->head;
+    pipeline_cmd_t *cur_node = pipeline->head;
 
     // Create the first pipe
     if (pipe(prev_pipe) == -1)
@@ -101,7 +101,7 @@ void execute_pipeline(pipeline_t *pipeline)
 
             if (cur_node->type == TOK_WORD)
             {
-                 // Built-in commands
+                // Built-in commands
                 if (strcmp(cur_node->args[0], "author") == 0)
                 {
                     printf("Niyomwungeri Parmenide Ishimwe\n");
@@ -174,7 +174,6 @@ void execute_pipeline(pipeline_t *pipeline)
     }
 
     // Wait for all the child processes to finish
-    // Wait for all the child processes to finish
     for (int i = 0; i < num_commands; i++)
     {
         pid_t terminated_pid = waitpid(-1, &status, 0);
@@ -234,7 +233,7 @@ int main()
             free(user_input);
             continue;
         }
-        
+
         if (tokens->length == 0)
         {
             CL_free(tokens);

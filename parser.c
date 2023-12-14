@@ -26,7 +26,7 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
     pipeline_t *pipeline = pipeline_new();
 
     // pipeline node
-    pipeline_node_t *node = NULL;
+    pipeline_cmd_t *node = NULL;
 
     // add each token to the current pipeline node until a pipe token is found
     for (int i = 0; i < tokens->length; i++)
@@ -41,13 +41,13 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
             if (node == NULL)
             {
                 // printf("new node\n");
-                node = pipeline_node_new(tok.type);
+                node = pipeline_cmd_new(tok.type);
 
                 // add the new node to the pipeline
-                pipeline_add_node(pipeline, node);
+                pipeline_add_command(pipeline, node);
 
                 // add the token to the new node
-                pipeline_node_add_arg(node, tok.text);
+                pipeline_cmd_add_arg(node, tok.text);
 
                 // there are next tokens that are words add them to the args
                 while (i + 1 < tokens->length)
@@ -55,7 +55,7 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
                     Token next_tok = CL_nth(tokens, i + 1);
                     if (next_tok.type == TOK_WORD || next_tok.type == TOK_QUOTED_WORD)
                     {
-                        pipeline_node_add_arg(node, next_tok.text);
+                        pipeline_cmd_add_arg(node, next_tok.text);
                         i++;
                     }
                     else
@@ -68,11 +68,11 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
         {
             // printf("pipe\n");
             // add an empty node to the pipeline
-            node = pipeline_node_new(tok.type);
-            pipeline_add_node(pipeline, node);
+            node = pipeline_cmd_new(tok.type);
+            pipeline_add_command(pipeline, node);
 
             // if the next token is a not a word, raise an error
-            if (i == 0 || i + 1 >= tokens->length || CL_nth(tokens, i + 1).type == TOK_PIPE) 
+            if (i == 0 || i + 1 >= tokens->length || CL_nth(tokens, i + 1).type == TOK_PIPE)
             {
                 snprintf(errmsg, errmsg_sz, "No command specified");
                 pipeline_free(pipeline);
@@ -87,8 +87,8 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
         {
             // printf("redirect in\n");
             // if the current pipeline node is NULL, create a new one
-            node = pipeline_node_new(tok.type);
-            pipeline_add_node(pipeline, node);
+            node = pipeline_cmd_new(tok.type);
+            pipeline_add_command(pipeline, node);
 
             if (i + 1 >= tokens->length || CL_nth(tokens, i + 1).type != TOK_WORD)
             {
@@ -127,8 +127,8 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
         {
             // printf("redirect out\n");
             // if the current pipeline node is NULL, create a new one
-            node = pipeline_node_new(tok.type);
-            pipeline_add_node(pipeline, node);
+            node = pipeline_cmd_new(tok.type);
+            pipeline_add_command(pipeline, node);
 
             if (i + 1 >= tokens->length || CL_nth(tokens, i + 1).type != TOK_WORD)
             {

@@ -55,13 +55,19 @@ void CL_free(CList list)
   // deallocate all the nodes in the list
   struct _cl_node *this_node = list->head;
 
+  if (this_node == NULL)
+  {
+    free(list);
+    return;
+  }
+
   // traverse the list, deallocating each node
   while (this_node != NULL)
   {
     // save a pointer to the next node
     struct _cl_node *next_node = this_node->next;
 
-    // deallocate the element of the current node
+    // deallocate the element of the current node if exists
     if (this_node->tok_elt.type == TOK_WORD || this_node->tok_elt.type == TOK_QUOTED_WORD)
       free(this_node->tok_elt.text);
 
@@ -107,7 +113,7 @@ void CL_push(CList list, Token tok)
 
 // Documented in .h file
 Token CL_pop(CList list)
-{ 
+{
   if (list == NULL)
     return EMPTY_TOKEN;
 
@@ -147,7 +153,6 @@ void CL_append(CList list, Token tok)
   // if the token is empty or spaces only, do nothing
   if ((tok.type == TOK_WORD || tok.type == TOK_QUOTED_WORD) && non_space == 0)
     return;
-
 
   if (list == NULL)
     return;

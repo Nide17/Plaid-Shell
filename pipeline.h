@@ -18,10 +18,10 @@ struct pipeline_node // pipeline node is a command with args, input file, output
     struct pipeline_node *next;
 };
 
-typedef struct pipeline_node pipeline_node_t; // pipeline_node_t is a pointer to a pipeline node
-struct pipeline                               // pipeline is a linked list of pipeline nodes
+typedef struct pipeline_node pipeline_cmd_t; // pipeline_cmd_t is a pointer to a pipeline node
+struct pipeline                              // pipeline is a linked list of pipeline nodes
 {
-    pipeline_node_t *head;
+    pipeline_cmd_t *head;
     int length;
     char *input;
     char *output;
@@ -38,7 +38,7 @@ typedef struct pipeline pipeline_t; // pipeline_t is a pointer to a pipeline
  * Returns:
  *  New node for the pipeline object
  */
-pipeline_node_t *pipeline_node_new();
+pipeline_cmd_t *pipeline_cmd_new();
 
 /**
  * Free a pipeline node.
@@ -49,7 +49,7 @@ pipeline_node_t *pipeline_node_new();
  * Returns:
  *  None
  */
-void pipeline_node_free(pipeline_node_t *node);
+void pipeline_node_free(pipeline_cmd_t *node);
 
 /*
  * Create a new pipeline object.
@@ -136,7 +136,7 @@ char *pipeline_get_output(pipeline_t *pipeline);
  * Returns:
  *  None
  */
-void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node);
+void pipeline_add_command(pipeline_t *pipeline, pipeline_cmd_t *node);
 
 /*
  * Add a new argument to the current node in a pipeline object.
@@ -148,7 +148,7 @@ void pipeline_add_node(pipeline_t *pipeline, pipeline_node_t *node);
  * Returns:
  *  None
  */
-void pipeline_node_add_arg(pipeline_node_t *node, char *arg);
+void pipeline_cmd_add_arg(pipeline_cmd_t *node, char *arg);
 
 /*
  * Get the command at the given index in a pipeline object.
@@ -160,7 +160,7 @@ void pipeline_node_add_arg(pipeline_node_t *node, char *arg);
  * Returns:
  *  the command at the given index in the pipeline object
  */
-char *pipeline_get_command(pipeline_t *pipeline, int index);
+pipeline_cmd_t *pipeline_get_command(pipeline_t *pipeline, int index);
 
 /*
  * Print the contents of a pipeline object to stdout
