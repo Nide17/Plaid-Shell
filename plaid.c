@@ -41,7 +41,7 @@ int execute_pipeline(pipeline_t *pipeline)
 
     pipeline_cmd_t *cur_node = pipeline->head;
 
-    // Create the first pipe
+    // Create the pipe for the first command
     if (pipe(prev_pipe) == -1)
     {
         perror("pipe");
@@ -51,19 +51,22 @@ int execute_pipeline(pipeline_t *pipeline)
     // Execute each command in the pipeline
     for (int i = 0; i < num_commands; i++)
     {
+        // Create the pipe for the next command
         if (i < num_commands - 1 && pipe(cur_pipe) == -1)
         {
             perror("pipe");
             exit(1);
         }
 
+        // Fork a new process for the current command
         pid = fork();
 
         if (pid == 0)
         {
-            // Child process
-            if (i != 0)
+            // Child process that runs the command 
+            if (i > 0)
             {
+                // if it is not the first command, read from the previous pipe
                 dup2(prev_pipe[0], STDIN_FILENO);
                 close(prev_pipe[0]);
                 close(prev_pipe[1]);
@@ -71,13 +74,16 @@ int execute_pipeline(pipeline_t *pipeline)
 
             if (i < num_commands - 1)
             {
+                // if it is not the last command, write to the next pipe
                 dup2(cur_pipe[1], STDOUT_FILENO);
                 close(cur_pipe[0]);
                 close(cur_pipe[1]);
             }
 
+            // Redirect input and output if necessary 
             if (pipeline_get_input(pipeline) != NULL)
             {
+                // Open the input file for reading 
                 int fd = open(pipeline_get_input(pipeline), O_RDONLY);
                 if (fd == -1)
                 {
@@ -85,12 +91,15 @@ int execute_pipeline(pipeline_t *pipeline)
                     exit(1);
                 }
 
+                // Redirect stdin to the input file
                 dup2(fd, STDIN_FILENO);
                 close(fd);
             }
 
+            // Open the output file for writing
             if (pipeline_get_output(pipeline) != NULL)
             {
+                // Open the output file for writing
                 int fd = open(pipeline_get_output(pipeline), O_WRONLY | O_CREAT | O_TRUNC, 0666);
                 if (fd == -1)
                 {
@@ -102,6 +111,7 @@ int execute_pipeline(pipeline_t *pipeline)
                 close(fd);
             }
 
+            // Execute the command 
             if (cur_node->type == TOK_WORD)
             {
                 // Built-in commands
@@ -152,6 +162,7 @@ int execute_pipeline(pipeline_t *pipeline)
 
                     return status;
                 }
+
                 else if (strcmp(cur_node->args[0], "pwd") == 0)
                 {
                     char *cwd = getcwd(NULL, 0);
