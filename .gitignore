@@ -7,6 +7,7 @@
 # Ignore .o and .exe files
 *.o
 *.exe
+*.out
 
 # Unignore all dirs
 !*/
