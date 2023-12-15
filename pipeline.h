@@ -11,7 +11,8 @@
 
 #include "token.h"
 
-struct pipeline_node // pipeline node is a command with args, input file, output file, and a pointer to the next pipeline node
+// pipeline node is a command with args, input file, output file, and a pointer to the next pipeline node
+struct pipeline_node
 {
     TokenType type;
     char *args[MAX_ARGS];

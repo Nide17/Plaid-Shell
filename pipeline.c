@@ -5,11 +5,10 @@
  *
  * Author: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
  */
-
-#include <assert.h> // assert
-#include <stdlib.h> // free/malloc
-#include <stdio.h>  // printf
-#include <string.h> // strcmp
+#include <assert.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "pipeline.h"
 

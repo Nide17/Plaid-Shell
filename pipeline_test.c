@@ -28,7 +28,6 @@ void run_test_cases()
     pipeline_add_command(pipeline, ls_node);
 
     assert(pipeline->length == 2);
-    // Get Command by Index: "pwd", "ls"
     assert(strcmp(pipeline_get_command(pipeline, 0)->args[0], "pwd") == 0);
     assert(strcmp(pipeline_get_command(pipeline, 1)->args[0], "ls") == 0);
 

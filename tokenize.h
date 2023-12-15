@@ -5,7 +5,6 @@
  *
  * Author: Niyomwungeri Parmenide Ishimwe <parmenin@andrew.cmu.edu>
  */
-
 #ifndef _TOKENIZE_H_
 #define _TOKENIZE_H_
 

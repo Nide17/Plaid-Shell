@@ -53,10 +53,9 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
                         pipeline_cmd_add_arg(node, next_tok.text);
                         i++;
                     }
+
                     else
-                    {
                         break;
-                    }
                 }
 
                 // add the new node to the pipeline
@@ -114,7 +113,9 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
                             return NULL;
                         }
                     }
-                    i++; // skip the next token since it has been processed
+
+                    // skip the next token since it has been processed
+                    i++; 
 
                     // clear the current node
                     node = NULL;
@@ -154,7 +155,8 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
                         }
                     }
 
-                    i++; // skip the next token since it has been processed
+                    // skip the next token since it has been processed
+                    i++;
 
                     // clear the current node
                     node = NULL;
