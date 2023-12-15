@@ -91,6 +91,7 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
             if (i + 1 >= tokens->length || CL_nth(tokens, i + 1).type != TOK_WORD)
             {
                 snprintf(errmsg, errmsg_sz, "Expect filename after redirection");
+                pipeline_free(pipeline);
                 return NULL;
             }
 
@@ -130,6 +131,7 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
             if (i + 1 >= tokens->length || CL_nth(tokens, i + 1).type != TOK_WORD)
             {
                 snprintf(errmsg, errmsg_sz, "Expect filename after redirection");
+                pipeline_free(pipeline);
                 return NULL;
             }
 
@@ -160,5 +162,6 @@ pipeline_t *parse_tokens(CList tokens, char *errmsg, size_t errmsg_sz)
             }
         }
     }
+    
     return pipeline;
 }

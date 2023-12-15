@@ -36,15 +36,6 @@ pipeline_cmd_t *pipeline_cmd_new(TokenType type)
 }
 
 // Documented in .h file
-void pipeline_node_free(pipeline_cmd_t *node)
-{
-    assert(node != NULL);
-
-    // free the pipeline node
-    free(node);
-}
-
-// Documented in .h file
 pipeline_t *pipeline_new()
 {
     // allocate a new pipeline object
@@ -76,7 +67,7 @@ void pipeline_free(pipeline_t *pipeline)
         pipeline_cmd_t *next_node = curr_node->next;
 
         // free the current node
-        pipeline_node_free(curr_node);
+        free(curr_node);
 
         // move on to the next node
         curr_node = next_node;

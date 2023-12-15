@@ -38,6 +38,7 @@ CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
     // clear the error message
     errmsg[0] = '\0';
     CList tokens = CL_new();
+    glob_t globbuf;
 
     while (user_input != NULL && *user_input != '\0')
     {
@@ -101,24 +102,20 @@ CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
                 }
 
                 // Else, we found the closing quote, so copy the quoted word into a new string
-                snprintf(quoted_word, end_quoted - user_input, "%s", user_input + 1);
-                if (quoted_word == NULL)
+                char *w = malloc(end_quoted - user_input);
+                if (w == NULL)
                 {
                     snprintf(errmsg, errmsg_sz, "Unable to allocate memory for quoted word");
                     CL_free(tokens);
                     return NULL;
                 }
 
-                // add the token to the list
-                // array to hold quoted word that is going to be freed
-                char *w = malloc(strlen(quoted_word) + 1);
-                strcpy(w, quoted_word);
+                snprintf(w, end_quoted - user_input, "%s", user_input + 1);
                 Token tok = {TOK_QUOTED_WORD, w};
                 CL_append(tokens, (Token)tok);
 
                 // deallocate the memory
                 free(quoted_word);
-                quoted_word = NULL;
 
                 // move the pointer to the next character after the closing quote
                 user_input = end_quoted + 1;
@@ -173,8 +170,9 @@ CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
 
                         default:
                             snprintf(errmsg, errmsg_sz, "Illegal escape character '%c", *(user_input + 1));
-                            free(word);
                             CL_free(tokens);
+                            free(word);
+
                             return NULL;
                         }
                         user_input += 2;
@@ -186,29 +184,25 @@ CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
                 }
                 word[i] = '\0';
 
-                // globbing
-                glob_t globbuf;
-                glob(word, GLOB_NOCHECK, NULL, &globbuf);
-
+                // Check for globbing characters
                 switch (*word)
                 {
                 case '*':
                 case '?':
                 case '[':
-                    // * and ? are expanded to the matching filenames, and [] is expanded to the matching characters
                     glob(word, GLOB_NOCHECK, NULL, &globbuf);
                     break;
 
                 case '~':
-                    // Expanding ~ to the home directory
                     char *tilde_rep = malloc(sizeof(char) * (strlen(word) + strlen(getenv("HOME")) + 1));
                     strcpy(tilde_rep, word);
                     glob(tilde_rep, GLOB_TILDE_CHECK, NULL, &globbuf);
                     free(tilde_rep);
-                    free(word);
+                    tilde_rep = NULL;
                     break;
 
                 default:
+                    glob(word, GLOB_TILDE_CHECK, NULL, &globbuf);
                     break;
                 }
 
@@ -216,34 +210,37 @@ CList TOK_tokenize_input(const char *user_input, char *errmsg, size_t errmsg_sz)
                 {
                     for (int i = 0; i < globbuf.gl_pathc; i++)
                     {
-                        char *w = malloc(strlen(globbuf.gl_pathv[i]) + 1);
-
-                        strcpy(w, globbuf.gl_pathv[i]);
+                        char *w = strdup(globbuf.gl_pathv[i]);
                         Token tok = {TOK_WORD, w};
-                        CL_append(tokens, (Token)tok);
-                        w = NULL;
+                        CL_append(tokens, tok);
                     }
                 }
                 else
                 {
-                    char *w = malloc(strlen(word) + 1);
-                    strcpy(w, word);
-                    Token tok = {TOK_WORD, w};
-
-                    // add the token to the list
-                    CL_append(tokens, (Token)tok);
+                    // If no matches found, add the original word to tokens
+                    Token tok = {TOK_WORD, strdup(word)};
+                    CL_append(tokens, tok);
 
                     // deallocate the memory
-                    w = NULL;
+                    if (word != NULL)
+                    {
+                        free(word);
+                        word = NULL;
+                    }
                 }
 
-                free(word);
-                globfree(&globbuf);
+                if (globbuf.gl_pathc != 0)
+                    globfree(&globbuf);
+
+                if (word != NULL)
+                {
+                    free(word);
+                    word = NULL;
+                }
             }
         }
     }
 
-    // Return the final list of tokens
     return tokens;
 }
 

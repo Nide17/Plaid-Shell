@@ -58,6 +58,7 @@ void CL_free(CList list)
   if (this_node == NULL)
   {
     free(list);
+    list = NULL;
     return;
   }
 
@@ -69,10 +70,17 @@ void CL_free(CList list)
 
     // deallocate the element of the current node if exists
     if (this_node->tok_elt.type == TOK_WORD || this_node->tok_elt.type == TOK_QUOTED_WORD)
-      free(this_node->tok_elt.text);
+    {
+      if (this_node->tok_elt.text != NULL)
+      {
+        free(this_node->tok_elt.text);
+        this_node->tok_elt.text = NULL;
+      }
+    }
 
     // deallocate the current node
     free(this_node);
+    this_node = NULL;
 
     // move on to the next node
     this_node = next_node;
@@ -80,6 +88,7 @@ void CL_free(CList list)
 
   // deallocate the list structure itself
   free(list);
+  list = NULL;
 }
 
 // Documented in .h file

@@ -136,7 +136,7 @@ int execute_pipeline(pipeline_t *pipeline)
                         // Execute the author command
                         printf("Niyomwungeri Parmenide ISHIMWE\n");
 
-                        exit (0);
+                        exit(0);
                     }
                     else
                     {
@@ -190,6 +190,8 @@ int execute_pipeline(pipeline_t *pipeline)
 
             if (pipeline_get_input(pipeline) != NULL)
                 close(STDIN_FILENO);
+
+            status = 0;
         }
         else if (pid > 0)
         {
@@ -248,6 +250,7 @@ int main()
     pipeline_t *pipeline = NULL;
     char errmsg[100];
     char *user_input = NULL;
+    int status;
 
     fprintf(stdout, "Welcome to Plaid Shell!\n");
     const char *terminal = "#? ";
@@ -275,7 +278,6 @@ int main()
         {
             printf("%s\n", errmsg);
             CL_free(tokens);
-            user_input = NULL;
             continue;
         }
 
@@ -283,7 +285,6 @@ int main()
         if (tokens->length == 0)
         {
             CL_free(tokens);
-            user_input = NULL;
             continue;
         }
 
@@ -294,11 +295,10 @@ int main()
         {
             printf("%s\n", errmsg);
             CL_free(tokens);
-            user_input = NULL;
             continue;
         }
 
-        if (strcmp(pipeline->head->args[0], "exit") == 0 || strcmp(pipeline->head->args[0], "quit") == 0)
+        if (pipeline->head->args[0] && (strcmp(pipeline->head->args[0], "exit") == 0 || strcmp(pipeline->head->args[0], "quit") == 0))
         {
             CL_free(tokens);
             pipeline_free(pipeline);
@@ -311,15 +311,24 @@ int main()
             printf("%s\n", errmsg);
             CL_free(tokens);
             pipeline_free(pipeline);
-            user_input = NULL;
             continue;
         }
 
-        execute_pipeline(pipeline);
+        // execute the pipeline
+        status = execute_pipeline(pipeline);
+
+        // free the memory
         CL_free(tokens);
         pipeline_free(pipeline);
+        free(user_input);
         user_input = NULL;
     }
 
-    exit(0);
+    if (user_input != NULL)
+    {
+        free(user_input);
+        user_input = NULL;
+    }
+
+    exit(status);
 }

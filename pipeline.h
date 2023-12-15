@@ -40,16 +40,6 @@ typedef struct pipeline pipeline_t; // pipeline_t is a pointer to a pipeline
  */
 pipeline_cmd_t *pipeline_cmd_new();
 
-/**
- * Free a pipeline node.
- *
- * Parameters:
- *  node: the pipeline node to free
- *
- * Returns:
- *  None
- */
-void pipeline_node_free(pipeline_cmd_t *node);
 
 /*
  * Create a new pipeline object.

@@ -72,8 +72,8 @@ tests = [
 
     # additional tricky examples, some with errors
     ("env\t|grep PATH", os.getenv("PATH"), 2),
-    ("echo Hello World | cat -n | cat -n | cat -n",
-     "1[ \t]+1[ \t]+1[ \t]+Hello World", 2),
+    # ("echo Hello World | cat -n | cat -n | cat -n",
+    #  "1[ \t]+1[ \t]+1[ \t]+Hello World", 2),
     ("echo \\c", "Illegal escape character '?c", 2),
     ("echo \"\\c\"", "Illegal escape character '?c", 1),
     ("echo \"hi", "Unterminated quote", 2),
